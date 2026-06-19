@@ -38,7 +38,8 @@ class AlertActivity : ComponentActivity() {
         showOverLockScreen()
 
         val reminderId = intent.getLongExtra(EXTRA_REMINDER_ID, -1L)
-        val title = intent.getStringExtra(EXTRA_TITLE).orEmpty().ifBlank { "时间提醒" }
+        val title = intent.getStringExtra(EXTRA_TITLE).orEmpty()
+            .ifBlank { "\u65f6\u95f4\u63d0\u9192" }
         val ringtoneId = intent.getStringExtra(EXTRA_RINGTONE_ID) ?: RingtoneCatalog.all.first().id
 
         app.ringtonePlayer.playLooping(ringtoneId)
@@ -114,7 +115,7 @@ private fun AlertScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "时间到了",
+                text = "\u65f6\u95f4\u5230\u4e86",
                 style = MaterialTheme.typography.displaySmall,
                 color = MaterialTheme.colorScheme.onErrorContainer,
                 textAlign = TextAlign.Center
@@ -136,13 +137,13 @@ private fun AlertScreen(
                     onClick = onSnooze,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("稍后提醒")
+                    Text("\u7a0d\u540e\u63d0\u9192")
                 }
                 Button(
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("知道了")
+                    Text("\u77e5\u9053\u4e86")
                 }
             }
         }

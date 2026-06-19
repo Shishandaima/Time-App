@@ -7,7 +7,7 @@
     <application
         android:name=".TimeMasterApplication"
         android:allowBackup="true"
-        android:label="时间管理大师"
+        android:label="&#26102;&#38388;&#31649;&#29702;&#22823;&#24072;"
         android:theme="@style/Theme.TimeMaster">
         <activity
             android:name=".MainActivity"

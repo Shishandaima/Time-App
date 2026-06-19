@@ -27,7 +27,9 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
                     return@launch
                 }
 
-                if (reminder.alertMode == AlertMode.Normal) {
+                if (reminder.alertMode == AlertMode.Strong) {
+                    app.ringtonePlayer.playLooping(reminder.ringtoneId)
+                } else {
                     app.ringtonePlayer.preview(reminder.ringtoneId)
                 }
                 app.reminderNotifier.showReminder(reminder)
