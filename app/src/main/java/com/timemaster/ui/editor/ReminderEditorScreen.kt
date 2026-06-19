@@ -1,14 +1,19 @@
 package com.timemaster.ui.editor
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -32,7 +37,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.timemaster.domain.AlertMode
 import com.timemaster.domain.Reminder
 import com.timemaster.domain.ReminderRule
@@ -75,16 +82,32 @@ fun ReminderEditorScreen(
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 64.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBack) {
-                Text("\u2039", style = MaterialTheme.typography.displaySmall)
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier.size(56.dp)
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "\u2039",
+                        style = MaterialTheme.typography.displaySmall.copy(lineHeight = 44.sp),
+                        modifier = Modifier.offset(y = (-1).dp)
+                    )
+                }
             }
             Text(
                 text = if (initialReminder == null) "\u65b0\u5efa\u5468\u671f\u63d0\u9192" else "\u7f16\u8f91\u63d0\u9192",
                 style = MaterialTheme.typography.headlineLarge,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 4.dp)
             )
         }
 
@@ -317,9 +340,15 @@ private fun TimePickerButton(
 ) {
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.height(72.dp)
+        modifier = modifier.heightIn(min = 96.dp),
+        shape = RectangleShape,
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)
     ) {
-        Column(horizontalAlignment = Alignment.Start) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
             Text(label, style = MaterialTheme.typography.bodyMedium)
             Text(value, style = MaterialTheme.typography.headlineMedium)
         }
@@ -347,13 +376,11 @@ private fun TimePickerDialog(
                 TimeColumn(
                     values = (0..23).toList(),
                     selected = selectedHour,
-                    suffix = "\u65f6",
                     onSelected = { selectedHour = it }
                 )
                 TimeColumn(
                     values = (0..59).toList(),
                     selected = selectedMinute,
-                    suffix = "\u5206",
                     onSelected = { selectedMinute = it }
                 )
             }
@@ -375,7 +402,6 @@ private fun TimePickerDialog(
 private fun TimeColumn(
     values: List<Int>,
     selected: Int,
-    suffix: String,
     onSelected: (Int) -> Unit
 ) {
     LazyColumn(
@@ -389,16 +415,24 @@ private fun TimeColumn(
             if (isSelected) {
                 Button(
                     onClick = { onSelected(value) },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 56.dp),
+                    shape = RectangleShape,
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                 ) {
-                    Text("%02d%s".format(value, suffix))
+                    Text("%02d".format(value))
                 }
             } else {
                 OutlinedButton(
                     onClick = { onSelected(value) },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 56.dp),
+                    shape = RectangleShape,
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                 ) {
-                    Text("%02d%s".format(value, suffix))
+                    Text("%02d".format(value))
                 }
             }
         }
