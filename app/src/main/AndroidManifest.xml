@@ -7,6 +7,8 @@
     <application
         android:name=".TimeMasterApplication"
         android:allowBackup="true"
+        android:icon="@drawable/ic_clock_app"
+        android:roundIcon="@drawable/ic_clock_app"
         android:label="&#26102;&#38388;&#31649;&#29702;&#22823;&#24072;"
         android:theme="@style/Theme.TimeMaster">
         <activity

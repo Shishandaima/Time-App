@@ -7,21 +7,31 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.timemaster.domain.AlertMode
 import com.timemaster.domain.Reminder
@@ -53,18 +63,30 @@ fun ReminderEditorScreen(
     var alertMode by remember { mutableStateOf(initialReminder?.alertMode ?: AlertMode.Strong) }
     var ringtoneId by remember { mutableStateOf(initialReminder?.ringtoneId ?: RingtoneCatalog.all.first().id) }
     var errorText by remember { mutableStateOf<String?>(null) }
+    var pickingStartTime by remember { mutableStateOf(false) }
+    var pickingEndTime by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .statusBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
-        Text(
-            text = if (initialReminder == null) "\u65b0\u5efa\u5468\u671f\u63d0\u9192" else "\u7f16\u8f91\u63d0\u9192",
-            style = MaterialTheme.typography.displaySmall
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack) {
+                Text("\u2039", style = MaterialTheme.typography.displaySmall)
+            }
+            Text(
+                text = if (initialReminder == null) "\u65b0\u5efa\u5468\u671f\u63d0\u9192" else "\u7f16\u8f91\u63d0\u9192",
+                style = MaterialTheme.typography.headlineLarge,
+                modifier = Modifier.weight(1f)
+            )
+        }
 
         OutlinedTextField(
             value = title,
@@ -83,21 +105,17 @@ fun ReminderEditorScreen(
             singleLine = true
         )
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedTextField(
+            TimePickerButton(
+                label = "\u5f00\u59cb\u65f6\u95f4",
                 value = startText,
-                onValueChange = { startText = it.take(5) },
-                label = { Text("\u5f00\u59cb\u65f6\u95f4") },
+                onClick = { pickingStartTime = true },
                 modifier = Modifier.weight(1f),
-                textStyle = MaterialTheme.typography.bodyLarge,
-                singleLine = true
             )
-            OutlinedTextField(
+            TimePickerButton(
+                label = "\u7ed3\u675f\u65f6\u95f4",
                 value = endText,
-                onValueChange = { endText = it.take(5) },
-                label = { Text("\u7ed3\u675f\u65f6\u95f4") },
+                onClick = { pickingEndTime = true },
                 modifier = Modifier.weight(1f),
-                textStyle = MaterialTheme.typography.bodyLarge,
-                singleLine = true
             )
         }
 
@@ -142,9 +160,30 @@ fun ReminderEditorScreen(
         ) {
             Text("\u4fdd\u5b58\u63d0\u9192")
         }
-        OutlinedButton(onClick = onBack, modifier = Modifier.height(60.dp)) {
-            Text("\u8fd4\u56de")
-        }
+    }
+
+    if (pickingStartTime) {
+        TimePickerDialog(
+            title = "\u9009\u62e9\u5f00\u59cb\u65f6\u95f4",
+            initialMinuteOfDay = parseMinute(startText) ?: 8 * 60,
+            onDismiss = { pickingStartTime = false },
+            onConfirm = {
+                startText = formatMinute(it)
+                pickingStartTime = false
+            }
+        )
+    }
+
+    if (pickingEndTime) {
+        TimePickerDialog(
+            title = "\u9009\u62e9\u7ed3\u675f\u65f6\u95f4",
+            initialMinuteOfDay = parseMinute(endText) ?: 22 * 60,
+            onDismiss = { pickingEndTime = false },
+            onConfirm = {
+                endText = formatMinute(it)
+                pickingEndTime = false
+            }
+        )
     }
 }
 
@@ -163,7 +202,11 @@ private fun WeekdaySelector(
                             val next = if (day in selectedDays) selectedDays - day else selectedDays + day
                             onSelectedDaysChange(next)
                         },
-                        label = { Text(day.label()) }
+                        label = { Text(day.value.toString()) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(0xFF006A60),
+                            selectedLabelColor = Color.White
+                        )
                     )
                 }
             }
@@ -265,12 +308,99 @@ private fun parseMinute(value: String): Int? {
 private fun formatMinute(minuteOfDay: Int): String =
     "%02d:%02d".format(minuteOfDay / 60, minuteOfDay % 60)
 
-private fun DayOfWeek.label(): String = when (this) {
-    DayOfWeek.MONDAY -> "\u5468\u4e00"
-    DayOfWeek.TUESDAY -> "\u5468\u4e8c"
-    DayOfWeek.WEDNESDAY -> "\u5468\u4e09"
-    DayOfWeek.THURSDAY -> "\u5468\u56db"
-    DayOfWeek.FRIDAY -> "\u5468\u4e94"
-    DayOfWeek.SATURDAY -> "\u5468\u516d"
-    DayOfWeek.SUNDAY -> "\u5468\u65e5"
+@Composable
+private fun TimePickerButton(
+    label: String,
+    value: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = modifier.height(72.dp)
+    ) {
+        Column(horizontalAlignment = Alignment.Start) {
+            Text(label, style = MaterialTheme.typography.bodyMedium)
+            Text(value, style = MaterialTheme.typography.headlineMedium)
+        }
+    }
+}
+
+@Composable
+private fun TimePickerDialog(
+    title: String,
+    initialMinuteOfDay: Int,
+    onDismiss: () -> Unit,
+    onConfirm: (Int) -> Unit
+) {
+    var selectedHour by remember { mutableStateOf(initialMinuteOfDay / 60) }
+    var selectedMinute by remember { mutableStateOf(initialMinuteOfDay % 60) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                TimeColumn(
+                    values = (0..23).toList(),
+                    selected = selectedHour,
+                    suffix = "\u65f6",
+                    onSelected = { selectedHour = it }
+                )
+                TimeColumn(
+                    values = (0..59).toList(),
+                    selected = selectedMinute,
+                    suffix = "\u5206",
+                    onSelected = { selectedMinute = it }
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(selectedHour * 60 + selectedMinute) }) {
+                Text("\u786e\u5b9a")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("\u53d6\u6d88")
+            }
+        }
+    )
+}
+
+@Composable
+private fun TimeColumn(
+    values: List<Int>,
+    selected: Int,
+    suffix: String,
+    onSelected: (Int) -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier
+            .height(220.dp)
+            .width(104.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        items(values) { value ->
+            val isSelected = value == selected
+            if (isSelected) {
+                Button(
+                    onClick = { onSelected(value) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("%02d%s".format(value, suffix))
+                }
+            } else {
+                OutlinedButton(
+                    onClick = { onSelected(value) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("%02d%s".format(value, suffix))
+                }
+            }
+        }
+    }
 }
