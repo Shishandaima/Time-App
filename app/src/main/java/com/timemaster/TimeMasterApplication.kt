@@ -6,6 +6,8 @@ import com.timemaster.alarm.AlarmScheduler
 import com.timemaster.alarm.ReminderAlarmScheduler
 import com.timemaster.data.AppDatabase
 import com.timemaster.data.ReminderRepository
+import com.timemaster.notification.ReminderNotifier
+import com.timemaster.sound.RingtonePlayer
 
 class TimeMasterApplication : Application() {
     val database: AppDatabase by lazy {
@@ -18,5 +20,13 @@ class TimeMasterApplication : Application() {
 
     val alarmScheduler: AlarmScheduler by lazy {
         ReminderAlarmScheduler(this)
+    }
+
+    val ringtonePlayer: RingtonePlayer by lazy {
+        RingtonePlayer(this)
+    }
+
+    val reminderNotifier: ReminderNotifier by lazy {
+        ReminderNotifier(this)
     }
 }

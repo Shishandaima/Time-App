@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.timemaster.TimeMasterApplication
+import com.timemaster.domain.AlertMode
 import com.timemaster.domain.nextTrigger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +27,11 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
                     return@launch
                 }
 
-                // Task 5 will show the reminder notification here.
+                if (reminder.alertMode == AlertMode.Normal) {
+                    app.ringtonePlayer.preview(reminder.ringtoneId)
+                }
+                app.reminderNotifier.showReminder(reminder)
+
                 val nextTriggerAtMillis = nextTrigger(LocalDateTime.now(), reminder.rule)
                     .atZone(ZoneId.systemDefault())
                     .toInstant()
