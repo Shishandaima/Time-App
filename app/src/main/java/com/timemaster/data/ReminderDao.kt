@@ -29,7 +29,10 @@ interface ReminderDao {
             insert(entity)
         } else {
             val updatedRows = update(entity)
-            if (updatedRows > 0) entity.id else insert(entity.copy(id = 0))
+            if (updatedRows == 0) {
+                throw IllegalStateException("Reminder ${entity.id} does not exist")
+            }
+            entity.id
         }
     }
 

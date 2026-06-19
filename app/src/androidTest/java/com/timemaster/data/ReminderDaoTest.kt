@@ -11,9 +11,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -89,12 +88,13 @@ class ReminderDaoTest {
     }
 
     @Test
-    fun upsertWithMissingNonzeroIdInsertsNewRow() = runBlocking {
-        val returnedId = dao.upsert(ReminderEntity(id = 999, title = "站立"))
-
-        assertNotEquals(999L, returnedId)
-        assertNull(dao.getById(999))
-        assertEquals("站立", dao.getById(returnedId)?.title)
+    fun upsertWithMissingNonzeroIdThrows() = runBlocking {
+        try {
+            dao.upsert(ReminderEntity(id = 999, title = "站立"))
+            fail("Expected IllegalStateException")
+        } catch (exception: IllegalStateException) {
+            assertEquals("Reminder 999 does not exist", exception.message)
+        }
     }
 
     @Test
