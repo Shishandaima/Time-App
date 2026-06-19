@@ -321,6 +321,7 @@ private fun TimePickerButton(
     OutlinedButton(
         onClick = onClick,
         modifier = modifier.heightIn(min = 96.dp),
+        shape = RectangleShape,
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)
     ) {
         Column(
