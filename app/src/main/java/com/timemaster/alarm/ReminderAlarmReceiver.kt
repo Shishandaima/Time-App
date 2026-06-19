@@ -31,8 +31,11 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
                     .atZone(ZoneId.systemDefault())
                     .toInstant()
                     .toEpochMilli()
-                app.reminderRepository.updateNextTrigger(reminderId, nextTriggerAtMillis)
-                app.alarmScheduler.schedule(reminderId, nextTriggerAtMillis)
+                if (app.alarmScheduler.schedule(reminderId, nextTriggerAtMillis)) {
+                    app.reminderRepository.updateNextTrigger(reminderId, nextTriggerAtMillis)
+                } else {
+                    app.reminderRepository.updateNextTrigger(reminderId, null)
+                }
             } finally {
                 pendingResult.finish()
             }

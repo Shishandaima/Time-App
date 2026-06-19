@@ -33,9 +33,14 @@ class BootReceiver : BroadcastReceiver() {
                             .atZone(ZoneId.systemDefault())
                             .toInstant()
                             .toEpochMilli()
-                            .also { app.reminderRepository.updateNextTrigger(reminder.id, it) }
                     }
-                    app.alarmScheduler.schedule(reminder.id, nextTriggerAtMillis)
+                    if (app.alarmScheduler.schedule(reminder.id, nextTriggerAtMillis)) {
+                        if (nextTriggerAtMillis != existingNextTrigger) {
+                            app.reminderRepository.updateNextTrigger(reminder.id, nextTriggerAtMillis)
+                        }
+                    } else {
+                        app.reminderRepository.updateNextTrigger(reminder.id, null)
+                    }
                 }
             } finally {
                 pendingResult.finish()
