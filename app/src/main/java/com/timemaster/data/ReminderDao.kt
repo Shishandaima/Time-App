@@ -21,15 +21,15 @@ interface ReminderDao {
     suspend fun insert(entity: ReminderEntity): Long
 
     @Update
-    suspend fun update(entity: ReminderEntity)
+    suspend fun update(entity: ReminderEntity): Int
 
     @Transaction
     suspend fun upsert(entity: ReminderEntity): Long {
         return if (entity.id == 0L) {
             insert(entity)
         } else {
-            update(entity)
-            entity.id
+            val updatedRows = update(entity)
+            if (updatedRows > 0) entity.id else insert(entity.copy(id = 0))
         }
     }
 

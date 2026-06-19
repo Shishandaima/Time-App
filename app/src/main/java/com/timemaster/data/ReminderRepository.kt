@@ -13,8 +13,16 @@ class ReminderRepository(
     suspend fun getReminder(id: Long): Reminder? =
         reminderDao.getById(id)?.toDomain()
 
-    suspend fun saveReminder(reminder: Reminder): Long =
-        reminderDao.upsert(ReminderEntity.fromDomain(reminder))
+    suspend fun saveReminder(reminder: Reminder): Long {
+        val now = System.currentTimeMillis()
+        val existing = if (reminder.id == 0L) null else reminderDao.getById(reminder.id)
+        val entity = ReminderEntity.fromDomain(
+            reminder = reminder,
+            createdAtMillis = existing?.createdAtMillis ?: now,
+            updatedAtMillis = now
+        )
+        return reminderDao.upsert(entity)
+    }
 
     suspend fun saveEntity(entity: ReminderEntity): Long =
         reminderDao.upsert(entity.copy(updatedAtMillis = System.currentTimeMillis()))

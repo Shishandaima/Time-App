@@ -66,8 +66,9 @@ fun maskFromDays(days: Set<DayOfWeek>): Int =
     days.fold(0) { mask, day -> mask or (1 shl (day.value - 1)) }
 
 fun daysFromMask(mask: Int): Set<DayOfWeek> {
-    // Treat an empty persisted mask as every day so legacy/corrupt rows still create a valid rule.
-    val safeMask = if (mask == 0) EVERY_DAY_MASK else mask
+    // Treat empty or unknown-only masks as every day so legacy/corrupt rows still create a valid rule.
+    val normalizedMask = mask and EVERY_DAY_MASK
+    val safeMask = if (normalizedMask == 0) EVERY_DAY_MASK else normalizedMask
     return DayOfWeek.entries
         .filter { day -> safeMask and (1 shl (day.value - 1)) != 0 }
         .toSet()
