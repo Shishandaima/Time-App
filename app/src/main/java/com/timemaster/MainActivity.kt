@@ -16,6 +16,7 @@ class MainActivity : ComponentActivity() {
             TimeMasterTheme {
                 TimeMasterApp(
                     repository = app.reminderRepository,
+                    alarmScheduler = app.alarmScheduler,
                     onPreviewRingtone = app.ringtonePlayer::preview
                 )
             }

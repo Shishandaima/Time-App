@@ -37,7 +37,8 @@ fun HomeScreen(
     onAddReminder: () -> Unit,
     onEditReminder: (Reminder) -> Unit,
     onToggleReminder: (Reminder, Boolean) -> Unit,
-    onDeleteReminder: (Reminder) -> Unit
+    onDeleteReminder: (Reminder) -> Unit,
+    permissionWarnings: List<String> = emptyList()
 ) {
     var deleteCandidate by remember { mutableStateOf<Reminder?>(null) }
 
@@ -58,6 +59,17 @@ fun HomeScreen(
                 .height(72.dp)
         ) {
             Text("\u65b0\u5efa\u5468\u671f\u63d0\u9192")
+        }
+
+        permissionWarnings.forEach { warning ->
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = warning,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
         }
 
         if (reminders.isEmpty()) {
