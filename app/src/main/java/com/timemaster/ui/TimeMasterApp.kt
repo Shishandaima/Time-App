@@ -113,7 +113,7 @@ fun TimeMasterApp(
                 scope.launch {
                     repository.deleteReminder(reminder.id)
                 }
-            }
+            },
             permissionWarnings = permissionWarnings
         )
     }
