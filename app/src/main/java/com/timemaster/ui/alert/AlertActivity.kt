@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.core.app.NotificationManagerCompat
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,9 +38,13 @@ class AlertActivity : ComponentActivity() {
         showOverLockScreen()
 
         val reminderId = intent.getLongExtra(EXTRA_REMINDER_ID, -1L)
+        val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, -1)
         val title = intent.getStringExtra(EXTRA_TITLE).orEmpty()
             .ifBlank { "\u65f6\u95f4\u63d0\u9192" }
 
+        if (notificationId >= 0) {
+            NotificationManagerCompat.from(this).cancel(notificationId)
+        }
         app.ringtonePlayer.stop()
 
         setContent {
@@ -89,6 +94,7 @@ class AlertActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_REMINDER_ID = "reminder_id"
+        const val EXTRA_NOTIFICATION_ID = "notification_id"
         const val EXTRA_TITLE = "title"
         const val EXTRA_RINGTONE_ID = "ringtone_id"
         private const val SNOOZE_MILLIS = 5 * 60 * 1000L

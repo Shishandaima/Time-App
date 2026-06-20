@@ -69,6 +69,7 @@ class ReminderNotifier(
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             data = Uri.parse("timemaster://alert/${reminder.id}")
             putExtra(AlertActivity.EXTRA_REMINDER_ID, reminder.id)
+            putExtra(AlertActivity.EXTRA_NOTIFICATION_ID, notificationId(reminder.id))
             putExtra(AlertActivity.EXTRA_TITLE, reminder.title)
             putExtra(AlertActivity.EXTRA_RINGTONE_ID, reminder.ringtoneId)
         }
