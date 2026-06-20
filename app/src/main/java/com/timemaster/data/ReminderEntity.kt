@@ -12,6 +12,7 @@ data class ReminderEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val title: String = "",
+    val intervalSeconds: Int = 30 * 60,
     val intervalMinutes: Int = 30,
     val startMinuteOfDay: Int = 8 * 60,
     val endMinuteOfDay: Int = 22 * 60,
@@ -27,7 +28,7 @@ data class ReminderEntity(
         id = id,
         title = title,
         rule = ReminderRule(
-            intervalMinutes = intervalMinutes,
+            intervalSeconds = intervalSeconds,
             startMinuteOfDay = startMinuteOfDay,
             endMinuteOfDay = endMinuteOfDay,
             enabledDays = daysFromMask(enabledDaysMask)
@@ -46,7 +47,8 @@ data class ReminderEntity(
         ): ReminderEntity = ReminderEntity(
             id = reminder.id,
             title = reminder.title,
-            intervalMinutes = reminder.rule.intervalMinutes,
+            intervalSeconds = reminder.rule.intervalSeconds,
+            intervalMinutes = reminder.rule.intervalSeconds / 60,
             startMinuteOfDay = reminder.rule.startMinuteOfDay,
             endMinuteOfDay = reminder.rule.endMinuteOfDay,
             enabledDaysMask = maskFromDays(reminder.rule.enabledDays),

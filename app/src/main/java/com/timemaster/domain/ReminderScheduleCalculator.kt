@@ -13,7 +13,7 @@ fun nextTrigger(now: LocalDateTime, rule: ReminderRule): LocalDateTime {
         val candidate = when {
             daysAhead > 0 -> start
             now.isBefore(start) -> start
-            now.isBefore(end) -> now.plusMinutes(rule.intervalMinutes.toLong())
+            now.isBefore(end) -> now.plusSeconds(rule.intervalSeconds.toLong())
             else -> null
         }
 

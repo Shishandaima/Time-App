@@ -11,7 +11,7 @@ import java.time.ZoneId
 
 class ReminderCountdownTextTest {
     private val rule = ReminderRule(
-        intervalMinutes = 30,
+        intervalSeconds = 30 * 60,
         startMinuteOfDay = 8 * 60,
         endMinuteOfDay = 22 * 60,
         enabledDays = DayOfWeek.entries.toSet()

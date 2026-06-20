@@ -38,12 +38,12 @@ class ReminderDaoTest {
 
     @Test
     fun observeAllReturnsInsertedReminder() = runBlocking {
-        dao.insert(ReminderEntity(title = "喝水", intervalMinutes = 30))
+        dao.insert(ReminderEntity(title = "喝水", intervalSeconds = 30 * 60))
 
         val reminders = dao.observeAll().first()
 
         assertEquals("喝水", reminders.single().title)
-        assertEquals(30, reminders.single().intervalMinutes)
+        assertEquals(30 * 60, reminders.single().intervalSeconds)
     }
 
     @Test
@@ -113,7 +113,7 @@ class ReminderDaoTest {
                 id = id,
                 title = "站立",
                 rule = ReminderRule(
-                    intervalMinutes = 30,
+                    intervalSeconds = 30 * 60,
                     startMinuteOfDay = 8 * 60,
                     endMinuteOfDay = 22 * 60,
                     enabledDays = DayOfWeek.entries.toSet()

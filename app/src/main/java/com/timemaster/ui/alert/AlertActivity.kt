@@ -24,7 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.timemaster.TimeMasterApplication
-import com.timemaster.sound.RingtoneCatalog
 import com.timemaster.ui.theme.TimeMasterTheme
 
 class AlertActivity : ComponentActivity() {
@@ -40,9 +39,8 @@ class AlertActivity : ComponentActivity() {
         val reminderId = intent.getLongExtra(EXTRA_REMINDER_ID, -1L)
         val title = intent.getStringExtra(EXTRA_TITLE).orEmpty()
             .ifBlank { "\u65f6\u95f4\u63d0\u9192" }
-        val ringtoneId = intent.getStringExtra(EXTRA_RINGTONE_ID) ?: RingtoneCatalog.all.first().id
 
-        app.ringtonePlayer.playLooping(ringtoneId)
+        app.ringtonePlayer.stop()
 
         setContent {
             TimeMasterTheme {
