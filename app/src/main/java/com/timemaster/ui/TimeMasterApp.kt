@@ -204,7 +204,7 @@ private suspend fun scheduleIfEnabled(
 
 fun newReminder(
     title: String,
-    intervalMinutes: Int,
+    intervalSeconds: Int,
     startMinuteOfDay: Int,
     endMinuteOfDay: Int,
     enabledDays: Set<DayOfWeek>,
@@ -214,7 +214,7 @@ fun newReminder(
     id = 0,
     title = title,
     rule = ReminderRule(
-        intervalMinutes = intervalMinutes,
+        intervalSeconds = intervalSeconds,
         startMinuteOfDay = startMinuteOfDay,
         endMinuteOfDay = endMinuteOfDay,
         enabledDays = enabledDays

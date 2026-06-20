@@ -195,7 +195,7 @@ private fun ReminderCard(
 }
 
 private fun Reminder.ruleSummary(): String =
-    "\u6bcf ${rule.intervalMinutes} \u5206\u949f\uff0c${formatMinute(rule.startMinuteOfDay)} \u5230 ${formatMinute(rule.endMinuteOfDay)}\uff0c${daySummary(rule.enabledDays)}"
+    "\u6bcf ${formatDuration(rule.intervalSeconds)}\uff0c${formatMinute(rule.startMinuteOfDay)} \u5230 ${formatMinute(rule.endMinuteOfDay)}\uff0c${daySummary(rule.enabledDays)}"
 
 private fun Reminder.modeSummary(): String =
     if (alertMode == AlertMode.Strong) "\u5f3a\u63d0\u9192" else "\u666e\u901a\u63d0\u9192"
@@ -207,6 +207,13 @@ private fun formatMinute(minuteOfDay: Int): String {
     val hour = minuteOfDay / 60
     val minute = minuteOfDay % 60
     return "%02d:%02d".format(hour, minute)
+}
+
+private fun formatDuration(totalSeconds: Int): String {
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    return "%02d:%02d:%02d".format(hours, minutes, seconds)
 }
 
 private fun daySummary(days: Set<DayOfWeek>): String {

@@ -49,6 +49,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.timemaster.domain.AlertMode
@@ -67,8 +68,8 @@ fun ReminderEditorScreen(
     onPreviewRingtone: (String) -> Unit = {}
 ) {
     var title by remember { mutableStateOf(initialReminder?.title.orEmpty()) }
-    var intervalText by remember {
-        mutableStateOf((initialReminder?.rule?.intervalMinutes ?: 30).toString())
+    var intervalSeconds by remember {
+        mutableStateOf(initialReminder?.rule?.intervalSeconds ?: 30 * 60)
     }
     var startText by remember {
         mutableStateOf(formatMinute(initialReminder?.rule?.startMinuteOfDay ?: 8 * 60))
@@ -82,6 +83,7 @@ fun ReminderEditorScreen(
     var alertMode by remember { mutableStateOf(initialReminder?.alertMode ?: AlertMode.Strong) }
     var ringtoneId by remember { mutableStateOf(initialReminder?.ringtoneId ?: RingtoneCatalog.all.first().id) }
     var errorText by remember { mutableStateOf<String?>(null) }
+    var pickingInterval by remember { mutableStateOf(false) }
     var pickingStartTime by remember { mutableStateOf(false) }
     var pickingEndTime by remember { mutableStateOf(false) }
 
@@ -131,13 +133,11 @@ fun ReminderEditorScreen(
             textStyle = MaterialTheme.typography.bodyLarge,
             singleLine = true
         )
-        OutlinedTextField(
-            value = intervalText,
-            onValueChange = { intervalText = it.filter(Char::isDigit).take(4) },
-            label = { Text("\u6bcf\u9694\u591a\u5c11\u5206\u949f") },
-            modifier = Modifier.fillMaxWidth(),
-            textStyle = MaterialTheme.typography.bodyLarge,
-            singleLine = true
+        TimePickerButton(
+            label = "\u6bcf\u9694\u591a\u5c11\u65f6\u95f4",
+            value = formatDuration(intervalSeconds),
+            onClick = { pickingInterval = true },
+            modifier = Modifier.fillMaxWidth()
         )
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             TimePickerButton(
@@ -176,7 +176,7 @@ fun ReminderEditorScreen(
                 val parsed = buildReminder(
                     initialReminder = initialReminder,
                     title = title,
-                    intervalText = intervalText,
+                    intervalSeconds = intervalSeconds,
                     startText = startText,
                     endText = endText,
                     selectedDays = selectedDays,
@@ -195,6 +195,18 @@ fun ReminderEditorScreen(
         ) {
             Text("\u4fdd\u5b58\u63d0\u9192")
         }
+    }
+
+    if (pickingInterval) {
+        DurationPickerDialog(
+            title = "\u9009\u62e9\u95f4\u9694\u65f6\u95f4",
+            initialSeconds = intervalSeconds,
+            onDismiss = { pickingInterval = false },
+            onConfirm = {
+                intervalSeconds = it
+                pickingInterval = false
+            }
+        )
     }
 
     if (pickingStartTime) {
@@ -300,14 +312,14 @@ private fun RingtoneSelector(
 private fun buildReminder(
     initialReminder: Reminder?,
     title: String,
-    intervalText: String,
+    intervalSeconds: Int,
     startText: String,
     endText: String,
     selectedDays: Set<DayOfWeek>,
     alertMode: AlertMode,
     ringtoneId: String
 ): Reminder? {
-    val interval = intervalText.toIntOrNull()?.takeIf { it > 0 } ?: return null
+    val interval = intervalSeconds.takeIf { it > 0 } ?: return null
     val start = parseMinute(startText) ?: return null
     val end = parseMinute(endText) ?: return null
     if (selectedDays.isEmpty() || start >= end) return null
@@ -315,7 +327,7 @@ private fun buildReminder(
     return if (initialReminder == null) {
         newReminder(
             title = title.ifBlank { "\u672a\u547d\u540d\u63d0\u9192" },
-            intervalMinutes = interval,
+            intervalSeconds = interval,
             startMinuteOfDay = start,
             endMinuteOfDay = end,
             enabledDays = selectedDays,
@@ -344,6 +356,13 @@ private fun parseMinute(value: String): Int? {
 private fun formatMinute(minuteOfDay: Int): String =
     "%02d:%02d".format(minuteOfDay / 60, minuteOfDay % 60)
 
+private fun formatDuration(totalSeconds: Int): String {
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    return "%02d:%02d:%02d".format(hours, minutes, seconds)
+}
+
 @Composable
 private fun TimePickerButton(
     label: String,
@@ -366,6 +385,71 @@ private fun TimePickerButton(
             Text(value, style = MaterialTheme.typography.headlineMedium)
         }
     }
+}
+
+@Composable
+private fun DurationPickerDialog(
+    title: String,
+    initialSeconds: Int,
+    onDismiss: () -> Unit,
+    onConfirm: (Int) -> Unit
+) {
+    var selectedHour by remember { mutableStateOf((initialSeconds / 3600).coerceIn(0, 23)) }
+    var selectedMinute by remember { mutableStateOf(((initialSeconds % 3600) / 60).coerceIn(0, 59)) }
+    var selectedSecond by remember { mutableStateOf((initialSeconds % 60).coerceIn(0, 59)) }
+    val toneGenerator = remember { ToneGenerator(AudioManager.STREAM_SYSTEM, 35) }
+
+    DisposableEffect(Unit) {
+        onDispose { toneGenerator.release() }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                TimeColumn(
+                    values = (0..23).toList(),
+                    selected = selectedHour,
+                    onSelected = { selectedHour = it },
+                    toneGenerator = toneGenerator,
+                    columnWidth = 82.dp
+                )
+                TimeColumn(
+                    values = (0..59).toList(),
+                    selected = selectedMinute,
+                    onSelected = { selectedMinute = it },
+                    toneGenerator = toneGenerator,
+                    columnWidth = 82.dp
+                )
+                TimeColumn(
+                    values = (0..59).toList(),
+                    selected = selectedSecond,
+                    onSelected = { selectedSecond = it },
+                    toneGenerator = toneGenerator,
+                    columnWidth = 82.dp
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val totalSeconds = selectedHour * 3600 + selectedMinute * 60 + selectedSecond
+                    onConfirm(totalSeconds.coerceAtLeast(1))
+                }
+            ) {
+                Text("\u786e\u5b9a")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("\u53d6\u6d88")
+            }
+        }
+    )
 }
 
 @Composable
@@ -423,7 +507,8 @@ private fun TimeColumn(
     values: List<Int>,
     selected: Int,
     onSelected: (Int) -> Unit,
-    toneGenerator: ToneGenerator
+    toneGenerator: ToneGenerator,
+    columnWidth: Dp = 104.dp
 ) {
     val itemHeight = 56.dp
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = values.indexOf(selected).coerceAtLeast(0))
@@ -453,7 +538,7 @@ private fun TimeColumn(
     Box(
         modifier = Modifier
             .height(216.dp)
-            .width(104.dp),
+            .width(columnWidth),
         contentAlignment = Alignment.Center
     ) {
         Box(

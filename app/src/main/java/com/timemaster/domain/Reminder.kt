@@ -8,13 +8,16 @@ enum class AlertMode {
 }
 
 data class ReminderRule(
-    val intervalMinutes: Int,
+    val intervalSeconds: Int,
     val startMinuteOfDay: Int,
     val endMinuteOfDay: Int,
     val enabledDays: Set<DayOfWeek>
 ) {
+    val intervalMinutes: Int
+        get() = intervalSeconds / 60
+
     init {
-        require(intervalMinutes > 0) { "intervalMinutes must be greater than 0" }
+        require(intervalSeconds > 0) { "intervalSeconds must be greater than 0" }
         require(startMinuteOfDay in 0..1439) { "startMinuteOfDay must be in 0..1439" }
         require(endMinuteOfDay in 1..1440) { "endMinuteOfDay must be in 1..1440" }
         require(startMinuteOfDay < endMinuteOfDay) { "startMinuteOfDay must be before endMinuteOfDay" }

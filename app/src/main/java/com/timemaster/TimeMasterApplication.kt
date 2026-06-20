@@ -11,7 +11,9 @@ import com.timemaster.sound.RingtonePlayer
 
 class TimeMasterApplication : Application() {
     val database: AppDatabase by lazy {
-        Room.databaseBuilder(this, AppDatabase::class.java, "time_master.db").build()
+        Room.databaseBuilder(this, AppDatabase::class.java, "time_master.db")
+            .addMigrations(AppDatabase.MIGRATION_1_2)
+            .build()
     }
 
     val reminderRepository: ReminderRepository by lazy {

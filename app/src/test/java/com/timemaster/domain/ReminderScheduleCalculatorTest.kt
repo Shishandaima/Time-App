@@ -7,7 +7,7 @@ import java.time.LocalDateTime
 
 class ReminderScheduleCalculatorTest {
     private val weekdayRule = ReminderRule(
-        intervalMinutes = 30,
+        intervalSeconds = 30 * 60,
         startMinuteOfDay = 8 * 60,
         endMinuteOfDay = 22 * 60,
         enabledDays = setOf(
@@ -31,6 +31,14 @@ class ReminderScheduleCalculatorTest {
         val now = LocalDateTime.of(2026, 6, 19, 9, 10)
 
         assertEquals(LocalDateTime.of(2026, 6, 19, 9, 40), nextTrigger(now, weekdayRule))
+    }
+
+    @Test
+    fun insideWindow_advancesBySecondInterval() {
+        val now = LocalDateTime.of(2026, 6, 19, 9, 10, 15)
+        val rule = weekdayRule.copy(intervalSeconds = 90)
+
+        assertEquals(LocalDateTime.of(2026, 6, 19, 9, 11, 45), nextTrigger(now, rule))
     }
 
     @Test
