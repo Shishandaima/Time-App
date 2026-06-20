@@ -49,6 +49,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -95,15 +96,17 @@ fun ReminderEditorScreen(
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 64.dp),
-            verticalAlignment = Alignment.CenterVertically
+            contentAlignment = Alignment.Center
         ) {
             IconButton(
                 onClick = onBack,
-                modifier = Modifier.size(56.dp)
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .size(56.dp)
             ) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -119,9 +122,10 @@ fun ReminderEditorScreen(
             Text(
                 text = if (initialReminder == null) "\u65b0\u5efa\u5468\u671f\u63d0\u9192" else "\u7f16\u8f91\u63d0\u9192",
                 style = MaterialTheme.typography.headlineLarge,
+                textAlign = TextAlign.Center,
                 modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 4.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = 64.dp)
             )
         }
 
