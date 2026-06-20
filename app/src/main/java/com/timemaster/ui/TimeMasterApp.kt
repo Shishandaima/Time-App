@@ -7,6 +7,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -16,6 +17,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.timemaster.alarm.AlarmScheduler
 import com.timemaster.data.ReminderRepository
 import com.timemaster.domain.AlertMode
@@ -39,6 +43,7 @@ fun TimeMasterApp(
     onPreviewRingtone: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val permissionPrefs = remember {
         context.getSharedPreferences("permission_prompts", Context.MODE_PRIVATE)
     }
@@ -65,6 +70,18 @@ fun TimeMasterApp(
     val permissionWarnings = buildList {
         if (!canNotify) add("\u9700\u8981\u901a\u77e5\u6743\u9650\uff0c\u5426\u5219\u63d0\u9192\u53ef\u80fd\u65e0\u6cd5\u663e\u793a\u3002")
         if (!canScheduleExact) add("\u9700\u8981\u201c\u95f9\u949f\u548c\u63d0\u9192\u201d\u6743\u9650\uff0c\u5426\u5219\u4e0d\u80fd\u51c6\u65f6\u54cd\u94c3\u3002")
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                permissionRefresh++
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     LaunchedEffect(Unit) {

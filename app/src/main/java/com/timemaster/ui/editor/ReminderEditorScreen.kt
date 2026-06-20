@@ -256,12 +256,14 @@ private fun AlertModeSelector(
 ) {
     Column {
         AlertMode.entries.forEach { mode ->
-            Row(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 RadioButton(selected = alertMode == mode, onClick = { onAlertModeChange(mode) })
                 Text(
                     text = if (mode == AlertMode.Strong) "\u5f3a\u63d0\u9192" else "\u666e\u901a\u63d0\u9192",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(top = 12.dp)
+                    style = MaterialTheme.typography.bodyLarge
                 )
             }
         }
@@ -278,15 +280,14 @@ private fun RingtoneSelector(
         RingtoneCatalog.all.forEach { option ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 RadioButton(selected = selectedId == option.id, onClick = { onSelected(option.id) })
                 Text(
                     text = option.label,
                     style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(top = 12.dp)
+                    modifier = Modifier.weight(1f)
                 )
                 OutlinedButton(onClick = { onPreview(option.id) }) {
                     Text("\u8bd5\u542c")
