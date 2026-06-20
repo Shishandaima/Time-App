@@ -4,6 +4,8 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -19,6 +21,8 @@ class RingtonePlayer(
         appContext.getSystemService(Vibrator::class.java)
     }
     private var player: MediaPlayer? = null
+    private val autoStopHandler = Handler(Looper.getMainLooper())
+    private val autoStopRunnable = Runnable { stop() }
 
     @Synchronized
     fun playLooping(ringtoneId: String) {
@@ -32,6 +36,7 @@ class RingtonePlayer(
 
     @Synchronized
     fun stop() {
+        autoStopHandler.removeCallbacks(autoStopRunnable)
         player?.release()
         player = null
         vibrator?.cancel()
@@ -56,6 +61,7 @@ class RingtonePlayer(
         nextPlayer.start()
         if (loop) {
             startVibration()
+            autoStopHandler.postDelayed(autoStopRunnable, AUTO_STOP_MILLIS)
         }
     }
 
@@ -74,5 +80,9 @@ class RingtonePlayer(
             @Suppress("DEPRECATION")
             currentVibrator.vibrate(pattern, 0, alarmAttributes)
         }
+    }
+
+    private companion object {
+        const val AUTO_STOP_MILLIS = 5_000L
     }
 }
