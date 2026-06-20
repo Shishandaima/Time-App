@@ -83,6 +83,6 @@ class RingtonePlayer(
     }
 
     private companion object {
-        const val AUTO_STOP_MILLIS = 5_000L
+        const val AUTO_STOP_MILLIS = 10_000L
     }
 }
