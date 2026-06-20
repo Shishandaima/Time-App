@@ -20,6 +20,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.timemaster.domain.AlertMode
 import com.timemaster.domain.Reminder
 import java.time.DayOfWeek
+import kotlinx.coroutines.delay
 
 @Composable
 fun HomeScreen(
@@ -42,6 +44,14 @@ fun HomeScreen(
     permissionWarnings: List<String> = emptyList()
 ) {
     var deleteCandidate by remember { mutableStateOf<Reminder?>(null) }
+    var nowMillis by remember { mutableStateOf(System.currentTimeMillis()) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            nowMillis = System.currentTimeMillis()
+            delay(1_000L)
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -81,6 +91,7 @@ fun HomeScreen(
                 items(reminders, key = { it.id }) { reminder ->
                     ReminderCard(
                         reminder = reminder,
+                        nowMillis = nowMillis,
                         onEdit = { onEditReminder(reminder) },
                         onToggle = { enabled -> onToggleReminder(reminder, enabled) },
                         onDelete = { deleteCandidate = reminder }
@@ -137,11 +148,13 @@ private fun EmptyState(onAddReminder: () -> Unit) {
 @Composable
 private fun ReminderCard(
     reminder: Reminder,
+    nowMillis: Long,
     onEdit: () -> Unit,
     onToggle: (Boolean) -> Unit,
     onDelete: () -> Unit
 ) {
-    val description = remember(reminder) { reminder.accessibilitySummary() }
+    val countdownText = reminderCountdownText(reminder, nowMillis)
+    val description = remember(reminder, countdownText) { reminder.accessibilitySummary(countdownText) }
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -167,6 +180,7 @@ private fun ReminderCard(
                 )
             }
             Text(text = reminder.ruleSummary(), style = MaterialTheme.typography.bodyLarge)
+            Text(text = countdownText, style = MaterialTheme.typography.headlineSmall)
             Text(text = reminder.modeSummary(), style = MaterialTheme.typography.bodyLarge)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedButton(onClick = onEdit, modifier = Modifier.height(56.dp)) {
@@ -186,8 +200,8 @@ private fun Reminder.ruleSummary(): String =
 private fun Reminder.modeSummary(): String =
     if (alertMode == AlertMode.Strong) "\u5f3a\u63d0\u9192" else "\u666e\u901a\u63d0\u9192"
 
-private fun Reminder.accessibilitySummary(): String =
-    "${title.ifBlank { "\u672a\u547d\u540d\u63d0\u9192" }}\uff0c${if (isEnabled) "\u5df2\u542f\u7528" else "\u5df2\u5173\u95ed"}\uff0c${ruleSummary()}\uff0c${modeSummary()}"
+private fun Reminder.accessibilitySummary(countdownText: String): String =
+    "${title.ifBlank { "\u672a\u547d\u540d\u63d0\u9192" }}\uff0c${if (isEnabled) "\u5df2\u542f\u7528" else "\u5df2\u5173\u95ed"}\uff0c${ruleSummary()}\uff0c$countdownText\uff0c${modeSummary()}"
 
 private fun formatMinute(minuteOfDay: Int): String {
     val hour = minuteOfDay / 60

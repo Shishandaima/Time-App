@@ -1,14 +1,17 @@
 package com.timemaster.ui
 
 import android.Manifest
+import android.content.Context
 import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -36,21 +39,59 @@ fun TimeMasterApp(
     onPreviewRingtone: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
+    val permissionPrefs = remember {
+        context.getSharedPreferences("permission_prompts", Context.MODE_PRIVATE)
+    }
     val reminders by repository.observeReminders().collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
     var editingReminder by remember { mutableStateOf<Reminder?>(null) }
     var showingEditor by remember { mutableStateOf(false) }
     var permissionRefresh by remember { mutableStateOf(0) }
+    var requestedInitialNotificationPermission by rememberSaveable {
+        mutableStateOf(permissionPrefs.getBoolean("initial_notification_requested", false))
+    }
+    var requestedInitialExactAlarmPermission by rememberSaveable {
+        mutableStateOf(permissionPrefs.getBoolean("initial_exact_alarm_requested", false))
+    }
+    var requestExactAfterNotification by rememberSaveable { mutableStateOf(false) }
     val notificationLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) {
         permissionRefresh++
+        requestExactAfterNotification = true
     }
     val canNotify = remember(permissionRefresh) { canPostNotifications(context) }
     val canScheduleExact = remember(permissionRefresh) { canScheduleExactAlarms(context) }
     val permissionWarnings = buildList {
         if (!canNotify) add("\u9700\u8981\u901a\u77e5\u6743\u9650\uff0c\u5426\u5219\u63d0\u9192\u53ef\u80fd\u65e0\u6cd5\u663e\u793a\u3002")
         if (!canScheduleExact) add("\u9700\u8981\u201c\u95f9\u949f\u548c\u63d0\u9192\u201d\u6743\u9650\uff0c\u5426\u5219\u4e0d\u80fd\u51c6\u65f6\u54cd\u94c3\u3002")
+    }
+
+    LaunchedEffect(Unit) {
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            !canPostNotifications(context) &&
+            !requestedInitialNotificationPermission
+        ) {
+            requestedInitialNotificationPermission = true
+            permissionPrefs.edit().putBoolean("initial_notification_requested", true).apply()
+            notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            requestExactAfterNotification = true
+        }
+    }
+
+    LaunchedEffect(permissionRefresh, requestExactAfterNotification) {
+        if (
+            requestExactAfterNotification &&
+            !canScheduleExactAlarms(context) &&
+            !requestedInitialExactAlarmPermission
+        ) {
+            requestedInitialExactAlarmPermission = true
+            permissionPrefs.edit().putBoolean("initial_exact_alarm_requested", true).apply()
+            requestExactAfterNotification = false
+            openExactAlarmSettings(context)
+        }
     }
 
     if (showingEditor) {

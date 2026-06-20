@@ -1,5 +1,9 @@
 package com.timemaster.ui.editor
 
+import android.media.AudioManager
+import android.media.ToneGenerator
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -30,14 +35,20 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.timemaster.domain.AlertMode
@@ -46,6 +57,7 @@ import com.timemaster.domain.ReminderRule
 import com.timemaster.sound.RingtoneCatalog
 import com.timemaster.ui.newReminder
 import java.time.DayOfWeek
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 fun ReminderEditorScreen(
@@ -364,6 +376,11 @@ private fun TimePickerDialog(
 ) {
     var selectedHour by remember { mutableStateOf(initialMinuteOfDay / 60) }
     var selectedMinute by remember { mutableStateOf(initialMinuteOfDay % 60) }
+    val toneGenerator = remember { ToneGenerator(AudioManager.STREAM_SYSTEM, 35) }
+
+    DisposableEffect(Unit) {
+        onDispose { toneGenerator.release() }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -376,12 +393,14 @@ private fun TimePickerDialog(
                 TimeColumn(
                     values = (0..23).toList(),
                     selected = selectedHour,
-                    onSelected = { selectedHour = it }
+                    onSelected = { selectedHour = it },
+                    toneGenerator = toneGenerator
                 )
                 TimeColumn(
                     values = (0..59).toList(),
                     selected = selectedMinute,
-                    onSelected = { selectedMinute = it }
+                    onSelected = { selectedMinute = it },
+                    toneGenerator = toneGenerator
                 )
             }
         },
@@ -402,37 +421,72 @@ private fun TimePickerDialog(
 private fun TimeColumn(
     values: List<Int>,
     selected: Int,
-    onSelected: (Int) -> Unit
+    onSelected: (Int) -> Unit,
+    toneGenerator: ToneGenerator
 ) {
-    LazyColumn(
-        modifier = Modifier
-            .height(220.dp)
-            .width(104.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        items(values) { value ->
-            val isSelected = value == selected
-            if (isSelected) {
-                Button(
-                    onClick = { onSelected(value) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 56.dp),
-                    shape = RectangleShape,
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                ) {
-                    Text("%02d".format(value))
+    val itemHeight = 56.dp
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = values.indexOf(selected).coerceAtLeast(0))
+    val hapticFeedback = LocalHapticFeedback.current
+    val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
+    val halfItemHeightPx = with(LocalDensity.current) { (itemHeight / 2).roundToPx() }
+
+    LaunchedEffect(listState, values) {
+        var lastSelected = selected
+        snapshotFlow {
+            val first = listState.firstVisibleItemIndex
+            val offset = listState.firstVisibleItemScrollOffset
+            val index = (first + if (offset > halfItemHeightPx) 1 else 0).coerceIn(values.indices)
+            values[index]
+        }
+            .distinctUntilChanged()
+            .collect { value ->
+                if (value != lastSelected) {
+                    lastSelected = value
+                    onSelected(value)
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 25)
                 }
-            } else {
-                OutlinedButton(
-                    onClick = { onSelected(value) },
+            }
+    }
+
+    Box(
+        modifier = Modifier
+            .height(216.dp)
+            .width(104.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(itemHeight)
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f))
+        )
+        LazyColumn(
+            state = listState,
+            flingBehavior = flingBehavior,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(vertical = 80.dp)
+        ) {
+            items(values) { value ->
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 56.dp),
-                    shape = RectangleShape,
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                        .height(itemHeight),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text("%02d".format(value))
+                    Text(
+                        text = "%02d".format(value),
+                        style = if (value == selected) {
+                            MaterialTheme.typography.headlineMedium
+                        } else {
+                            MaterialTheme.typography.titleLarge
+                        },
+                        color = if (value == selected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    )
                 }
             }
         }
