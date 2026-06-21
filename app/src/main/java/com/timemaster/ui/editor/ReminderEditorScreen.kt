@@ -49,6 +49,13 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.setProgress
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -57,8 +64,8 @@ import com.timemaster.domain.AlertMode
 import com.timemaster.domain.Reminder
 import com.timemaster.domain.ReminderRule
 import com.timemaster.sound.RingtoneCatalog
-import com.timemaster.ui.newReminder
 import java.time.DayOfWeek
+import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
@@ -329,7 +336,7 @@ private fun buildReminder(
     if (selectedDays.isEmpty() || start >= end) return null
 
     return if (initialReminder == null) {
-        newReminder(
+        createNewReminder(
             title = title.ifBlank { "\u672a\u547d\u540d\u63d0\u9192" },
             intervalSeconds = interval,
             startMinuteOfDay = start,
@@ -347,6 +354,29 @@ private fun buildReminder(
         )
     }
 }
+
+private fun createNewReminder(
+    title: String,
+    intervalSeconds: Int,
+    startMinuteOfDay: Int,
+    endMinuteOfDay: Int,
+    enabledDays: Set<DayOfWeek>,
+    alertMode: AlertMode,
+    ringtoneId: String
+): Reminder = Reminder(
+    id = 0,
+    title = title,
+    rule = ReminderRule(
+        intervalSeconds = intervalSeconds,
+        startMinuteOfDay = startMinuteOfDay,
+        endMinuteOfDay = endMinuteOfDay,
+        enabledDays = enabledDays
+    ),
+    alertMode = alertMode,
+    ringtoneId = ringtoneId,
+    isEnabled = true,
+    nextTriggerAtMillis = null
+)
 
 private fun parseMinute(value: String): Int? {
     val parts = value.split(":")
@@ -420,21 +450,39 @@ private fun DurationPickerDialog(
                     selected = selectedHour,
                     onSelected = { selectedHour = it },
                     toneGenerator = toneGenerator,
-                    columnWidth = 82.dp
+                    columnWidth = 82.dp,
+                    accessibilityUnit = "\u5c0f\u65f6",
+                    selectionDescription = durationSelectionDescription(
+                        selectedHour,
+                        selectedMinute,
+                        selectedSecond
+                    )
                 )
                 TimeColumn(
                     values = (0..59).toList(),
                     selected = selectedMinute,
                     onSelected = { selectedMinute = it },
                     toneGenerator = toneGenerator,
-                    columnWidth = 82.dp
+                    columnWidth = 82.dp,
+                    accessibilityUnit = "\u5206",
+                    selectionDescription = durationSelectionDescription(
+                        selectedHour,
+                        selectedMinute,
+                        selectedSecond
+                    )
                 )
                 TimeColumn(
                     values = (0..59).toList(),
                     selected = selectedSecond,
                     onSelected = { selectedSecond = it },
                     toneGenerator = toneGenerator,
-                    columnWidth = 82.dp
+                    columnWidth = 82.dp,
+                    accessibilityUnit = "\u79d2",
+                    selectionDescription = durationSelectionDescription(
+                        selectedHour,
+                        selectedMinute,
+                        selectedSecond
+                    )
                 )
             }
         },
@@ -483,13 +531,17 @@ private fun TimePickerDialog(
                     values = (0..23).toList(),
                     selected = selectedHour,
                     onSelected = { selectedHour = it },
-                    toneGenerator = toneGenerator
+                    toneGenerator = toneGenerator,
+                    accessibilityUnit = "\u5c0f\u65f6",
+                    selectionDescription = timeSelectionDescription(selectedHour, selectedMinute)
                 )
                 TimeColumn(
                     values = (0..59).toList(),
                     selected = selectedMinute,
                     onSelected = { selectedMinute = it },
-                    toneGenerator = toneGenerator
+                    toneGenerator = toneGenerator,
+                    accessibilityUnit = "\u5206",
+                    selectionDescription = timeSelectionDescription(selectedHour, selectedMinute)
                 )
             }
         },
@@ -512,13 +564,22 @@ private fun TimeColumn(
     selected: Int,
     onSelected: (Int) -> Unit,
     toneGenerator: ToneGenerator,
-    columnWidth: Dp = 104.dp
+    columnWidth: Dp = 104.dp,
+    accessibilityUnit: String,
+    selectionDescription: String
 ) {
     val itemHeight = 56.dp
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = values.indexOf(selected).coerceAtLeast(0))
     val hapticFeedback = LocalHapticFeedback.current
     val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
     val halfItemHeightPx = with(LocalDensity.current) { (itemHeight / 2).roundToPx() }
+
+    LaunchedEffect(selected, values) {
+        val selectedIndex = values.indexOf(selected)
+        if (selectedIndex >= 0 && listState.firstVisibleItemIndex != selectedIndex) {
+            listState.animateScrollToItem(selectedIndex)
+        }
+    }
 
     LaunchedEffect(listState, values) {
         var lastSelected = selected
@@ -533,8 +594,7 @@ private fun TimeColumn(
                 if (value != lastSelected) {
                     lastSelected = value
                     onSelected(value)
-                    hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 25)
+                    performPickerFeedback(hapticFeedback, toneGenerator)
                 }
             }
     }
@@ -542,7 +602,25 @@ private fun TimeColumn(
     Box(
         modifier = Modifier
             .height(216.dp)
-            .width(columnWidth),
+            .width(columnWidth)
+            .semantics {
+                contentDescription = "${selected}${accessibilityUnit}\u6ed1\u5757\uff0c\u53ef\u4e0a\u4e0b\u6ed1\u52a8\u8c03\u8282"
+                stateDescription = selectionDescription
+                progressBarRangeInfo = ProgressBarRangeInfo(
+                    current = selected.toFloat(),
+                    range = values.first().toFloat()..values.last().toFloat()
+                )
+                setProgress { targetValue ->
+                    val nextValue = targetValue
+                        .roundToInt()
+                        .coerceIn(values.first(), values.last())
+                    if (nextValue != selected) {
+                        onSelected(nextValue)
+                        performPickerFeedback(hapticFeedback, toneGenerator)
+                    }
+                    true
+                }
+            },
         contentAlignment = Alignment.Center
     ) {
         Box(
@@ -554,7 +632,9 @@ private fun TimeColumn(
         LazyColumn(
             state = listState,
             flingBehavior = flingBehavior,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .clearAndSetSemantics { },
             contentPadding = PaddingValues(vertical = 80.dp)
         ) {
             items(values) { value ->
@@ -581,4 +661,18 @@ private fun TimeColumn(
             }
         }
     }
+}
+
+private fun durationSelectionDescription(hours: Int, minutes: Int, seconds: Int): String =
+    "${hours}\u5c0f\u65f6${minutes}\u5206${seconds}\u79d2"
+
+private fun timeSelectionDescription(hours: Int, minutes: Int): String =
+    "${hours}\u70b9${minutes}\u5206"
+
+private fun performPickerFeedback(
+    hapticFeedback: androidx.compose.ui.hapticfeedback.HapticFeedback,
+    toneGenerator: ToneGenerator
+) {
+    hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+    toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 25)
 }
