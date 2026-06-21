@@ -51,10 +51,12 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.ScrollAxisRange
 import androidx.compose.ui.semantics.scrollBy
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.verticalScrollAxisRange
 import kotlin.math.roundToInt
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -616,6 +618,11 @@ private fun TimeColumn(
             .semantics {
                 contentDescription = "${accessibilityUnit}\uff0c\u53ef\u4e0a\u4e0b\u6ed1\u52a8\u8c03\u8282"
                 stateDescription = selectionDescription
+                verticalScrollAxisRange = ScrollAxisRange(
+                    value = { selected.toFloat() },
+                    maxValue = { values.last().toFloat() },
+                    reverseScrolling = false
+                )
                 setProgress { targetValue ->
                     val nextValue = targetValue
                         .roundToInt()

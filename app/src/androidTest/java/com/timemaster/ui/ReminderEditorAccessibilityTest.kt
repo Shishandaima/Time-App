@@ -30,16 +30,19 @@ class ReminderEditorAccessibilityTest {
             .assert(hasStateDescription(durationState(0, 30, 0)))
             .assert(hasScrollAction())
             .assert(hasSetProgressAction())
+            .assert(hasVerticalScrollRange())
             .assert(hasNoProgressInfo())
         composeRule.onNode(hasContentDescription(minutePrompt()))
             .assert(hasStateDescription(durationState(0, 30, 0)))
             .assert(hasScrollAction())
             .assert(hasSetProgressAction())
+            .assert(hasVerticalScrollRange())
             .assert(hasNoProgressInfo())
         composeRule.onNode(hasContentDescription(secondPrompt()))
             .assert(hasStateDescription(durationState(0, 30, 0)))
             .assert(hasScrollAction())
             .assert(hasSetProgressAction())
+            .assert(hasVerticalScrollRange())
             .assert(hasNoProgressInfo())
     }
 
@@ -53,11 +56,13 @@ class ReminderEditorAccessibilityTest {
             .assert(hasStateDescription(timeState(8, 0)))
             .assert(hasScrollAction())
             .assert(hasSetProgressAction())
+            .assert(hasVerticalScrollRange())
             .assert(hasNoProgressInfo())
         composeRule.onNode(hasContentDescription(minutePrompt()))
             .assert(hasStateDescription(timeState(8, 0)))
             .assert(hasScrollAction())
             .assert(hasSetProgressAction())
+            .assert(hasVerticalScrollRange())
             .assert(hasNoProgressInfo())
     }
 
@@ -136,6 +141,16 @@ class ReminderEditorAccessibilityTest {
         SemanticsMatcher("has set progress action") { node ->
             try {
                 node.config[SemanticsActions.SetProgress]
+                true
+            } catch (_: AssertionError) {
+                false
+            }
+        }
+
+    private fun hasVerticalScrollRange() =
+        SemanticsMatcher("has vertical scroll range") { node ->
+            try {
+                node.config[SemanticsProperties.VerticalScrollAxisRange]
                 true
             } catch (_: AssertionError) {
                 false
