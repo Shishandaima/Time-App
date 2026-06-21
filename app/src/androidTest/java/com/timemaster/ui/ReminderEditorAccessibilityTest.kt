@@ -1,5 +1,6 @@
 package com.timemaster.ui
 
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -31,19 +32,19 @@ class ReminderEditorAccessibilityTest {
             .assert(hasScrollAction())
             .assert(hasSetProgressAction())
             .assert(hasVerticalScrollRange())
-            .assert(hasNoProgressInfo())
+            .assert(hasProgressInfo(0f, 0f..23f, steps = 22))
         composeRule.onNode(hasContentDescription(minutePrompt()))
             .assert(hasStateDescription(durationState(0, 30, 0)))
             .assert(hasScrollAction())
             .assert(hasSetProgressAction())
             .assert(hasVerticalScrollRange())
-            .assert(hasNoProgressInfo())
+            .assert(hasProgressInfo(30f, 0f..59f, steps = 58))
         composeRule.onNode(hasContentDescription(secondPrompt()))
             .assert(hasStateDescription(durationState(0, 30, 0)))
             .assert(hasScrollAction())
             .assert(hasSetProgressAction())
             .assert(hasVerticalScrollRange())
-            .assert(hasNoProgressInfo())
+            .assert(hasProgressInfo(0f, 0f..59f, steps = 58))
     }
 
     @Test
@@ -57,13 +58,13 @@ class ReminderEditorAccessibilityTest {
             .assert(hasScrollAction())
             .assert(hasSetProgressAction())
             .assert(hasVerticalScrollRange())
-            .assert(hasNoProgressInfo())
+            .assert(hasProgressInfo(8f, 0f..23f, steps = 22))
         composeRule.onNode(hasContentDescription(minutePrompt()))
             .assert(hasStateDescription(timeState(8, 0)))
             .assert(hasScrollAction())
             .assert(hasSetProgressAction())
             .assert(hasVerticalScrollRange())
-            .assert(hasNoProgressInfo())
+            .assert(hasProgressInfo(0f, 0f..59f, steps = 58))
     }
 
     @Test
@@ -114,13 +115,17 @@ class ReminderEditorAccessibilityTest {
         }
     }
 
-    private fun hasNoProgressInfo() =
-        SemanticsMatcher("has no progress info") { node ->
+    private fun hasProgressInfo(
+        current: Float,
+        range: ClosedFloatingPointRange<Float>,
+        steps: Int
+    ) =
+        SemanticsMatcher("has progress info $current in $range") { node ->
             try {
-                node.config[SemanticsProperties.ProgressBarRangeInfo]
-                false
+                node.config[SemanticsProperties.ProgressBarRangeInfo] ==
+                    ProgressBarRangeInfo(current, range, steps)
             } catch (_: AssertionError) {
-                true
+                false
             }
         }
 

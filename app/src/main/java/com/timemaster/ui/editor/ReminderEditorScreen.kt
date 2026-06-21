@@ -53,6 +53,8 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.ScrollAxisRange
 import androidx.compose.ui.semantics.scrollBy
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.semantics.stateDescription
@@ -622,6 +624,11 @@ private fun TimeColumn(
                     value = { selected.toFloat() },
                     maxValue = { values.last().toFloat() },
                     reverseScrolling = false
+                )
+                progressBarRangeInfo = ProgressBarRangeInfo(
+                    current = selected.toFloat(),
+                    range = values.first().toFloat()..values.last().toFloat(),
+                    steps = (values.size - 2).coerceAtLeast(0)
                 )
                 setProgress { targetValue ->
                     val nextValue = targetValue
