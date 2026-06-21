@@ -442,7 +442,15 @@ private fun TimePickerButton(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(
+                    if (accessibilityValue == null) {
+                        Modifier
+                    } else {
+                        Modifier.clearAndSetSemantics { }
+                    }
+                ),
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {

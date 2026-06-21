@@ -28,19 +28,19 @@ class ReminderEditorAccessibilityTest {
     fun intervalButtonReadsDurationAsHoursMinutesAndSeconds() {
         setEditorContent(initialReminder = reminderWithInterval(1 * 3600 + 30 * 60))
 
-        composeRule.onNodeWithText("01:30:00").assertExists()
+        composeRule.onNodeWithText("01:30:00").assertDoesNotExist()
         composeRule.onNode(hasContentDescription("$INTERVAL_LABEL\uff0c1\u5c0f\u65f630\u5206"))
             .assertExists()
 
         setEditorContent(initialReminder = reminderWithInterval(30 * 60))
 
-        composeRule.onNodeWithText("00:30:00").assertExists()
+        composeRule.onNodeWithText("00:30:00").assertDoesNotExist()
         composeRule.onNode(hasContentDescription("$INTERVAL_LABEL\uff0c30\u5206\u949f"))
             .assertExists()
 
         setEditorContent(initialReminder = reminderWithInterval(2 * 3600 + 30 * 60 + 15))
 
-        composeRule.onNodeWithText("02:30:15").assertExists()
+        composeRule.onNodeWithText("02:30:15").assertDoesNotExist()
         composeRule.onNode(hasContentDescription("$INTERVAL_LABEL\uff0c2\u5c0f\u65f630\u520615\u79d2"))
             .assertExists()
     }
