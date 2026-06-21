@@ -318,7 +318,10 @@ private fun RingtoneSelector(
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.weight(1f)
                 )
-                OutlinedButton(onClick = { onPreview(option.id) }) {
+                OutlinedButton(
+                    onClick = { onPreview(option.id) },
+                    shape = MaterialTheme.shapes.medium
+                ) {
                     Text("\u8bd5\u542c")
                 }
             }
