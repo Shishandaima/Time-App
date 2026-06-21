@@ -27,19 +27,19 @@ class ReminderEditorAccessibilityTest {
 
         composeRule.onNodeWithText(INTERVAL_LABEL).performClick()
 
-        composeRule.onNode(hasContentDescription(hourPrompt()))
+        composeRule.onNode(hasContentDescription(hourLabel(0)))
             .assert(hasStateDescription(durationState(0, 30, 0)))
             .assert(hasScrollAction())
             .assert(hasSetProgressAction())
             .assert(hasVerticalScrollRange())
             .assert(hasProgressInfo(0f, 0f..23f, steps = 22))
-        composeRule.onNode(hasContentDescription(minutePrompt()))
+        composeRule.onNode(hasContentDescription(minuteLabel(30)))
             .assert(hasStateDescription(durationState(0, 30, 0)))
             .assert(hasScrollAction())
             .assert(hasSetProgressAction())
             .assert(hasVerticalScrollRange())
             .assert(hasProgressInfo(30f, 0f..59f, steps = 58))
-        composeRule.onNode(hasContentDescription(secondPrompt()))
+        composeRule.onNode(hasContentDescription(secondLabel(0)))
             .assert(hasStateDescription(durationState(0, 30, 0)))
             .assert(hasScrollAction())
             .assert(hasSetProgressAction())
@@ -53,13 +53,13 @@ class ReminderEditorAccessibilityTest {
 
         composeRule.onNodeWithText(START_TIME_LABEL).performClick()
 
-        composeRule.onNode(hasContentDescription(hourPrompt()))
+        composeRule.onNode(hasContentDescription(hourLabel(8)))
             .assert(hasStateDescription(timeState(8, 0)))
             .assert(hasScrollAction())
             .assert(hasSetProgressAction())
             .assert(hasVerticalScrollRange())
             .assert(hasProgressInfo(8f, 0f..23f, steps = 22))
-        composeRule.onNode(hasContentDescription(minutePrompt()))
+        composeRule.onNode(hasContentDescription(minuteLabel(0)))
             .assert(hasStateDescription(timeState(8, 0)))
             .assert(hasScrollAction())
             .assert(hasSetProgressAction())
@@ -74,7 +74,7 @@ class ReminderEditorAccessibilityTest {
         composeRule.onNodeWithText(START_TIME_LABEL).performClick()
 
         composeRule.onNode(
-            hasText("08") and hasAnyAncestor(hasContentDescription(hourPrompt())),
+            hasText("08") and hasAnyAncestor(hasContentDescription(hourLabel(8))),
             useUnmergedTree = true
         ).assertDoesNotExist()
     }
@@ -85,20 +85,20 @@ class ReminderEditorAccessibilityTest {
 
         composeRule.onNodeWithText(INTERVAL_LABEL).performClick()
 
-        composeRule.onNode(hasContentDescription(minutePrompt()))
+        composeRule.onNode(hasContentDescription(minuteLabel(30)))
             .performSemanticsAction(SemanticsActions.SetProgress) { action -> action(31f) }
         composeRule.waitForIdle()
 
-        composeRule.onNode(hasContentDescription(minutePrompt()))
+        composeRule.onNode(hasContentDescription(minuteLabel(31)))
             .assert(hasStateDescription(durationState(0, 31, 0)))
 
         repeat(5) {
-            composeRule.onNode(hasContentDescription(secondPrompt()))
+            composeRule.onNode(hasContentDescription(secondLabel(it)))
                 .performSemanticsAction(SemanticsActions.SetProgress) { action -> action((it + 1).toFloat()) }
             composeRule.waitForIdle()
         }
 
-        composeRule.onNode(hasContentDescription(secondPrompt()))
+        composeRule.onNode(hasContentDescription(secondLabel(5)))
             .assert(hasStateDescription(durationState(0, 31, 5)))
     }
 
@@ -162,11 +162,11 @@ class ReminderEditorAccessibilityTest {
             }
         }
 
-    private fun hourPrompt() = "\u5c0f\u65f6\uff0c\u53ef\u4e0a\u4e0b\u6ed1\u52a8\u8c03\u8282"
+    private fun hourLabel(value: Int) = "$value\u5c0f\u65f6"
 
-    private fun minutePrompt() = "\u5206\uff0c\u53ef\u4e0a\u4e0b\u6ed1\u52a8\u8c03\u8282"
+    private fun minuteLabel(value: Int) = "$value\u5206"
 
-    private fun secondPrompt() = "\u79d2\uff0c\u53ef\u4e0a\u4e0b\u6ed1\u52a8\u8c03\u8282"
+    private fun secondLabel(value: Int) = "$value\u79d2"
 
     private fun durationState(hours: Int, minutes: Int, seconds: Int) =
         "$hours\u5c0f\u65f6$minutes\u5206$seconds\u79d2"

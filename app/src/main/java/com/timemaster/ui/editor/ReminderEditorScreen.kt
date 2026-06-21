@@ -618,7 +618,7 @@ private fun TimeColumn(
             .height(216.dp)
             .width(columnWidth)
             .semantics {
-                contentDescription = "${accessibilityUnit}\uff0c\u53ef\u4e0a\u4e0b\u6ed1\u52a8\u8c03\u8282"
+                contentDescription = "${selected}${accessibilityUnit}"
                 stateDescription = selectionDescription
                 verticalScrollAxisRange = ScrollAxisRange(
                     value = { selected.toFloat() },
