@@ -65,6 +65,7 @@ import com.timemaster.domain.Reminder
 import com.timemaster.domain.ReminderRule
 import com.timemaster.sound.RingtoneCatalog
 import java.time.DayOfWeek
+import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.distinctUntilChanged
 
@@ -574,23 +575,33 @@ private fun TimeColumn(
     val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
     val halfItemHeightPx = with(LocalDensity.current) { (itemHeight / 2).roundToPx() }
 
-    LaunchedEffect(selected, values) {
+    LaunchedEffect(selected, values, listState.isScrollInProgress) {
         val selectedIndex = values.indexOf(selected)
-        if (selectedIndex >= 0 && listState.firstVisibleItemIndex != selectedIndex) {
-            listState.animateScrollToItem(selectedIndex)
+        if (
+            selectedIndex >= 0 &&
+            !listState.isScrollInProgress &&
+            (listState.firstVisibleItemIndex != selectedIndex || listState.firstVisibleItemScrollOffset != 0)
+        ) {
+            listState.scrollToItem(selectedIndex)
         }
     }
 
     LaunchedEffect(listState, values) {
         var lastSelected = selected
         snapshotFlow {
-            val first = listState.firstVisibleItemIndex
-            val offset = listState.firstVisibleItemScrollOffset
-            val index = (first + if (offset > halfItemHeightPx) 1 else 0).coerceIn(values.indices)
-            values[index]
+            val layoutInfo = listState.layoutInfo
+            val center = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
+            val centeredItem = layoutInfo.visibleItemsInfo.minByOrNull { item ->
+                abs(item.offset + item.size / 2 - center)
+            }
+            val index = centeredItem?.index
+                ?: (listState.firstVisibleItemIndex +
+                    if (listState.firstVisibleItemScrollOffset > halfItemHeightPx) 1 else 0)
+            index.coerceIn(values.indices)
         }
             .distinctUntilChanged()
-            .collect { value ->
+            .collect { index ->
+                val value = values[index]
                 if (value != lastSelected) {
                     lastSelected = value
                     onSelected(value)
