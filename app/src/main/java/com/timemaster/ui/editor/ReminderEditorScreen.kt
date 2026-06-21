@@ -49,12 +49,10 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.scrollBy
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -66,7 +64,6 @@ import com.timemaster.domain.ReminderRule
 import com.timemaster.sound.RingtoneCatalog
 import java.time.DayOfWeek
 import kotlin.math.abs
-import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
@@ -615,17 +612,18 @@ private fun TimeColumn(
             .height(216.dp)
             .width(columnWidth)
             .semantics {
-                contentDescription = "${selected}${accessibilityUnit}\u6ed1\u5757\uff0c\u53ef\u4e0a\u4e0b\u6ed1\u52a8\u8c03\u8282"
+                contentDescription = "${accessibilityUnit}\uff0c\u53ef\u4e0a\u4e0b\u6ed1\u52a8\u8c03\u8282"
                 stateDescription = selectionDescription
-                progressBarRangeInfo = ProgressBarRangeInfo(
-                    current = selected.toFloat(),
-                    range = values.first().toFloat()..values.last().toFloat(),
-                    steps = (values.size - 2).coerceAtLeast(0)
-                )
-                setProgress { targetValue ->
-                    val nextValue = targetValue
-                        .roundToInt()
-                        .coerceIn(values.first(), values.last())
+                scrollBy { _, y ->
+                    val direction = when {
+                        y > 0f -> 1
+                        y < 0f -> -1
+                        else -> 0
+                    }
+                    val currentIndex = values.indexOf(selected)
+                    val nextValue = values
+                        .getOrNull((currentIndex + direction).coerceIn(values.indices))
+                        ?: selected
                     if (nextValue != selected) {
                         onSelected(nextValue)
                         performPickerFeedback(hapticFeedback, toneGenerator)

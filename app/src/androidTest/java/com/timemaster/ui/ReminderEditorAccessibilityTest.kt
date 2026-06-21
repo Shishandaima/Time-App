@@ -1,6 +1,5 @@
 package com.timemaster.ui
 
-import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -27,15 +26,18 @@ class ReminderEditorAccessibilityTest {
 
         composeRule.onNodeWithText(INTERVAL_LABEL).performClick()
 
-        composeRule.onNode(hasContentDescription(hourSlider(0)))
-            .assert(hasProgressInfo(0f, 0f..23f, steps = 22))
-            .assert(hasSetProgressAction())
-        composeRule.onNode(hasContentDescription(minuteSlider(30)))
-            .assert(hasProgressInfo(30f, 0f..59f, steps = 58))
-            .assert(hasSetProgressAction())
-        composeRule.onNode(hasContentDescription(secondSlider(0)))
-            .assert(hasProgressInfo(0f, 0f..59f, steps = 58))
-            .assert(hasSetProgressAction())
+        composeRule.onNode(hasContentDescription(hourPrompt()))
+            .assert(hasStateDescription(durationState(0, 30, 0)))
+            .assert(hasScrollAction())
+            .assert(hasNoProgressInfo())
+        composeRule.onNode(hasContentDescription(minutePrompt()))
+            .assert(hasStateDescription(durationState(0, 30, 0)))
+            .assert(hasScrollAction())
+            .assert(hasNoProgressInfo())
+        composeRule.onNode(hasContentDescription(secondPrompt()))
+            .assert(hasStateDescription(durationState(0, 30, 0)))
+            .assert(hasScrollAction())
+            .assert(hasNoProgressInfo())
     }
 
     @Test
@@ -44,12 +46,14 @@ class ReminderEditorAccessibilityTest {
 
         composeRule.onNodeWithText(START_TIME_LABEL).performClick()
 
-        composeRule.onNode(hasContentDescription(hourSlider(8)))
+        composeRule.onNode(hasContentDescription(hourPrompt()))
             .assert(hasStateDescription(timeState(8, 0)))
-            .assert(hasSetProgressAction())
-        composeRule.onNode(hasContentDescription(minuteSlider(0)))
+            .assert(hasScrollAction())
+            .assert(hasNoProgressInfo())
+        composeRule.onNode(hasContentDescription(minutePrompt()))
             .assert(hasStateDescription(timeState(8, 0)))
-            .assert(hasSetProgressAction())
+            .assert(hasScrollAction())
+            .assert(hasNoProgressInfo())
     }
 
     @Test
@@ -59,7 +63,7 @@ class ReminderEditorAccessibilityTest {
         composeRule.onNodeWithText(START_TIME_LABEL).performClick()
 
         composeRule.onNode(
-            hasText("08") and hasAnyAncestor(hasContentDescription(hourSlider(8))),
+            hasText("08") and hasAnyAncestor(hasContentDescription(hourPrompt())),
             useUnmergedTree = true
         ).assertDoesNotExist()
     }
@@ -70,18 +74,20 @@ class ReminderEditorAccessibilityTest {
 
         composeRule.onNodeWithText(INTERVAL_LABEL).performClick()
 
-        composeRule.onNode(hasContentDescription(minuteSlider(30)))
-            .performSemanticsAction(SemanticsActions.SetProgress) { action -> action(31f) }
+        composeRule.onNode(hasContentDescription(minutePrompt()))
+            .performSemanticsAction(SemanticsActions.ScrollBy) { action -> action(0f, 1f) }
         composeRule.waitForIdle()
 
-        composeRule.onNode(hasContentDescription(minuteSlider(31)))
+        composeRule.onNode(hasContentDescription(minutePrompt()))
             .assert(hasStateDescription(durationState(0, 31, 0)))
 
-        composeRule.onNode(hasContentDescription(secondSlider(0)))
-            .performSemanticsAction(SemanticsActions.SetProgress) { action -> action(5f) }
-        composeRule.waitForIdle()
+        repeat(5) {
+            composeRule.onNode(hasContentDescription(secondPrompt()))
+                .performSemanticsAction(SemanticsActions.ScrollBy) { action -> action(0f, 1f) }
+            composeRule.waitForIdle()
+        }
 
-        composeRule.onNode(hasContentDescription(secondSlider(5)))
+        composeRule.onNode(hasContentDescription(secondPrompt()))
             .assert(hasStateDescription(durationState(0, 31, 5)))
     }
 
@@ -98,38 +104,34 @@ class ReminderEditorAccessibilityTest {
         }
     }
 
-    private fun hasProgressInfo(
-        current: Float,
-        range: ClosedFloatingPointRange<Float>,
-        steps: Int
-    ) =
-        SemanticsMatcher("has progress info $current in $range") { node ->
+    private fun hasNoProgressInfo() =
+        SemanticsMatcher("has no progress info") { node ->
             try {
-                node.config[SemanticsProperties.ProgressBarRangeInfo] ==
-                    ProgressBarRangeInfo(current, range, steps)
-            } catch (_: AssertionError) {
+                node.config[SemanticsProperties.ProgressBarRangeInfo]
                 false
+            } catch (_: AssertionError) {
+                true
             }
         }
 
     private fun hasStateDescription(value: String) =
         SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, value)
 
-    private fun hasSetProgressAction() =
-        SemanticsMatcher("has set progress action") { node ->
+    private fun hasScrollAction() =
+        SemanticsMatcher("has scroll action") { node ->
             try {
-                node.config[SemanticsActions.SetProgress]
+                node.config[SemanticsActions.ScrollBy]
                 true
             } catch (_: AssertionError) {
                 false
             }
         }
 
-    private fun hourSlider(value: Int) = "$value\u5c0f\u65f6\u6ed1\u5757\uff0c\u53ef\u4e0a\u4e0b\u6ed1\u52a8\u8c03\u8282"
+    private fun hourPrompt() = "\u5c0f\u65f6\uff0c\u53ef\u4e0a\u4e0b\u6ed1\u52a8\u8c03\u8282"
 
-    private fun minuteSlider(value: Int) = "$value\u5206\u6ed1\u5757\uff0c\u53ef\u4e0a\u4e0b\u6ed1\u52a8\u8c03\u8282"
+    private fun minutePrompt() = "\u5206\uff0c\u53ef\u4e0a\u4e0b\u6ed1\u52a8\u8c03\u8282"
 
-    private fun secondSlider(value: Int) = "$value\u79d2\u6ed1\u5757\uff0c\u53ef\u4e0a\u4e0b\u6ed1\u52a8\u8c03\u8282"
+    private fun secondPrompt() = "\u79d2\uff0c\u53ef\u4e0a\u4e0b\u6ed1\u52a8\u8c03\u8282"
 
     private fun durationState(hours: Int, minutes: Int, seconds: Int) =
         "$hours\u5c0f\u65f6$minutes\u5206$seconds\u79d2"
