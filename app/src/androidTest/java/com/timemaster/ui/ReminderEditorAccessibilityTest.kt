@@ -28,13 +28,13 @@ class ReminderEditorAccessibilityTest {
         composeRule.onNodeWithText(INTERVAL_LABEL).performClick()
 
         composeRule.onNode(hasContentDescription(hourSlider(0)))
-            .assert(hasProgressInfo(0f, 0f..23f))
+            .assert(hasProgressInfo(0f, 0f..23f, steps = 22))
             .assert(hasSetProgressAction())
         composeRule.onNode(hasContentDescription(minuteSlider(30)))
-            .assert(hasProgressInfo(30f, 0f..59f))
+            .assert(hasProgressInfo(30f, 0f..59f, steps = 58))
             .assert(hasSetProgressAction())
         composeRule.onNode(hasContentDescription(secondSlider(0)))
-            .assert(hasProgressInfo(0f, 0f..59f))
+            .assert(hasProgressInfo(0f, 0f..59f, steps = 58))
             .assert(hasSetProgressAction())
     }
 
@@ -98,10 +98,15 @@ class ReminderEditorAccessibilityTest {
         }
     }
 
-    private fun hasProgressInfo(current: Float, range: ClosedFloatingPointRange<Float>) =
+    private fun hasProgressInfo(
+        current: Float,
+        range: ClosedFloatingPointRange<Float>,
+        steps: Int
+    ) =
         SemanticsMatcher("has progress info $current in $range") { node ->
             try {
-                node.config[SemanticsProperties.ProgressBarRangeInfo] == ProgressBarRangeInfo(current, range)
+                node.config[SemanticsProperties.ProgressBarRangeInfo] ==
+                    ProgressBarRangeInfo(current, range, steps)
             } catch (_: AssertionError) {
                 false
             }

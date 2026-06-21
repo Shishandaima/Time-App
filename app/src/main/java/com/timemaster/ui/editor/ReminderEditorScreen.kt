@@ -619,7 +619,8 @@ private fun TimeColumn(
                 stateDescription = selectionDescription
                 progressBarRangeInfo = ProgressBarRangeInfo(
                     current = selected.toFloat(),
-                    range = values.first().toFloat()..values.last().toFloat()
+                    range = values.first().toFloat()..values.last().toFloat(),
+                    steps = (values.size - 2).coerceAtLeast(0)
                 )
                 setProgress { targetValue ->
                     val nextValue = targetValue
