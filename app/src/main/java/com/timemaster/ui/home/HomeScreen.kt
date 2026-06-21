@@ -32,7 +32,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.timemaster.domain.AlertMode
 import com.timemaster.domain.Reminder
+import com.timemaster.domain.ReminderRule
+import java.time.Instant
 import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
+import kotlin.math.max
 import kotlinx.coroutines.delay
 
 @Composable
@@ -71,7 +78,8 @@ fun HomeScreen(
             onClick = onAddReminder,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(72.dp)
+                .height(72.dp),
+            shape = MaterialTheme.shapes.medium
         ) {
             Text("\u65b0\u5efa\u5468\u671f\u63d0\u9192")
         }
@@ -156,7 +164,7 @@ private fun ReminderCard(
     onToggle: (Boolean) -> Unit,
     onDelete: () -> Unit
 ) {
-    val countdownText = reminderCountdownText(reminder, nowMillis)
+    val countdownText = cardCountdownText(reminder, nowMillis)
     val description = remember(reminder, countdownText) { reminder.accessibilitySummary(countdownText) }
     Card(
         modifier = Modifier
@@ -182,8 +190,21 @@ private fun ReminderCard(
                     onCheckedChange = onToggle
                 )
             }
-            Text(text = reminder.ruleSummary(), style = MaterialTheme.typography.bodyLarge)
-            Text(text = countdownText, style = MaterialTheme.typography.headlineSmall)
+            Text(
+                text = reminder.intervalSummary(),
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.semantics {
+                    contentDescription = reminder.intervalAccessibilitySummary()
+                }
+            )
+            Text(text = reminder.timeWindowSummary(), style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = countdownText,
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.semantics {
+                    contentDescription = countdownAccessibilityText(countdownText)
+                }
+            )
             Text(text = reminder.modeSummary(), style = MaterialTheme.typography.bodyLarge)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedButton(onClick = onEdit, modifier = Modifier.height(56.dp)) {
@@ -197,14 +218,20 @@ private fun ReminderCard(
     }
 }
 
-private fun Reminder.ruleSummary(): String =
-    "\u6bcf ${formatDuration(rule.intervalSeconds)}\uff0c${formatMinute(rule.startMinuteOfDay)} \u5230 ${formatMinute(rule.endMinuteOfDay)}\uff0c${daySummary(rule.enabledDays)}"
+private fun Reminder.intervalSummary(): String =
+    "\u95f4\u9694\u65f6\u95f4\uff1a${formatDuration(rule.intervalSeconds)}\uff0c${daySummary(rule.enabledDays)}"
+
+private fun Reminder.intervalAccessibilitySummary(): String =
+    "\u95f4\u9694\u65f6\u95f4\uff1a${formatDurationForTalkBack(rule.intervalSeconds.toLong())}\uff0c${daySummary(rule.enabledDays)}"
+
+private fun Reminder.timeWindowSummary(): String =
+    "\u65f6\u95f4\u6bb5\uff1a${formatMinute(rule.startMinuteOfDay)} \u5230 ${formatMinute(rule.endMinuteOfDay)}"
 
 private fun Reminder.modeSummary(): String =
-    if (alertMode == AlertMode.Strong) "\u5f3a\u63d0\u9192" else "\u666e\u901a\u63d0\u9192"
+    "\u63d0\u9192\u65b9\u5f0f\uff1a${if (alertMode == AlertMode.Strong) "\u5f3a\u63d0\u9192" else "\u666e\u901a\u63d0\u9192"}"
 
 private fun Reminder.accessibilitySummary(countdownText: String): String =
-    "${title.ifBlank { "\u672a\u547d\u540d\u63d0\u9192" }}\uff0c${if (isEnabled) "\u5df2\u542f\u7528" else "\u5df2\u5173\u95ed"}\uff0c${ruleSummary()}\uff0c$countdownText\uff0c${modeSummary()}"
+    "${title.ifBlank { "\u672a\u547d\u540d\u63d0\u9192" }}\uff0c${if (isEnabled) "\u5df2\u542f\u7528" else "\u5df2\u5173\u95ed"}\uff0c${intervalAccessibilitySummary()}\uff0c${timeWindowSummary()}\uff0c${countdownAccessibilityText(countdownText)}\uff0c${modeSummary()}"
 
 private fun formatMinute(minuteOfDay: Int): String {
     val hour = minuteOfDay / 60
@@ -218,6 +245,105 @@ private fun formatDuration(totalSeconds: Int): String {
     val seconds = totalSeconds % 60
     return "%02d:%02d:%02d".format(hours, minutes, seconds)
 }
+
+private fun formatDurationForTalkBack(totalSeconds: Long): String {
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    val parts = buildList {
+        if (hours > 0) add("${hours}\u5c0f\u65f6")
+        if (minutes > 0) {
+            val unit = if (hours == 0L && seconds == 0L) "\u5206\u949f" else "\u5206"
+            add("${minutes}$unit")
+        }
+        if (seconds > 0) add("${seconds}\u79d2")
+    }
+    return parts.takeIf { it.isNotEmpty() }?.joinToString(separator = "") ?: "0\u79d2"
+}
+
+private fun countdownAccessibilityText(countdownText: String): String {
+    val prefix = "\u4e0b\u6b21\u63d0\u9192\uff1a"
+    val value = countdownText.removePrefix(prefix)
+    if (value == "\u672a\u542f\u7528") return countdownText
+
+    val daysAndClock = value.split(" ", limit = 2)
+    val daysText = daysAndClock.firstOrNull()?.takeIf { it.endsWith("\u5929") }
+    val clock = if (daysText == null) value else daysAndClock.getOrNull(1).orEmpty()
+    val seconds = parseClockSeconds(clock) ?: return countdownText
+    return buildString {
+        append(prefix)
+        if (daysText != null) append(daysText)
+        append(formatDurationForTalkBack(seconds))
+    }
+}
+
+private fun parseClockSeconds(clock: String): Long? {
+    val parts = clock.split(":")
+    if (parts.size != 3) return null
+    val hours = parts[0].toLongOrNull() ?: return null
+    val minutes = parts[1].toLongOrNull() ?: return null
+    val seconds = parts[2].toLongOrNull() ?: return null
+    return hours * 3600 + minutes * 60 + seconds
+}
+
+private fun cardCountdownText(
+    reminder: Reminder,
+    nowMillis: Long,
+    zoneId: ZoneId = ZoneId.systemDefault()
+): String {
+    if (!reminder.isEnabled) return "\u4e0b\u6b21\u63d0\u9192\uff1a\u672a\u542f\u7528"
+
+    val targetMillis = reminder.nextTriggerAtMillis
+        ?.takeIf { it > nowMillis }
+        ?: cardNextTrigger(
+            now = LocalDateTime.ofInstant(Instant.ofEpochMilli(nowMillis), zoneId),
+            rule = reminder.rule
+        ).atZone(zoneId).toInstant().toEpochMilli()
+
+    val totalSeconds = max(
+        0L,
+        ChronoUnit.SECONDS.between(
+            Instant.ofEpochMilli(nowMillis),
+            Instant.ofEpochMilli(targetMillis)
+        )
+    )
+    val days = totalSeconds / 86_400
+    val hours = (totalSeconds % 86_400) / 3_600
+    val minutes = (totalSeconds % 3_600) / 60
+    val seconds = totalSeconds % 60
+    val clock = "%02d:%02d:%02d".format(hours, minutes, seconds)
+
+    return if (days > 0) {
+        "\u4e0b\u6b21\u63d0\u9192\uff1a${days}\u5929 $clock"
+    } else {
+        "\u4e0b\u6b21\u63d0\u9192\uff1a$clock"
+    }
+}
+
+private fun cardNextTrigger(now: LocalDateTime, rule: ReminderRule): LocalDateTime {
+    for (daysAhead in 0..13) {
+        val date = now.toLocalDate().plusDays(daysAhead.toLong())
+        if (date.dayOfWeek !in rule.enabledDays) continue
+
+        val start = date.atMinuteOfDay(rule.startMinuteOfDay)
+        val end = date.atMinuteOfDay(rule.endMinuteOfDay)
+        val candidate = when {
+            daysAhead > 0 -> start
+            now.isBefore(start) -> start
+            now.isBefore(end) -> now.plusSeconds(rule.intervalSeconds.toLong())
+            else -> null
+        }
+
+        if (candidate != null && !candidate.isAfter(end)) {
+            return candidate
+        }
+    }
+
+    error("Unable to find next trigger within two weeks")
+}
+
+private fun LocalDate.atMinuteOfDay(minuteOfDay: Int): LocalDateTime =
+    atStartOfDay().plusMinutes(minuteOfDay.toLong())
 
 private fun daySummary(days: Set<DayOfWeek>): String {
     if (days.size == 7) return "\u6bcf\u5929"
