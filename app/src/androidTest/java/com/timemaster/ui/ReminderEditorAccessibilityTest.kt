@@ -12,14 +12,45 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
+import com.timemaster.domain.AlertMode
+import com.timemaster.domain.Reminder
+import com.timemaster.domain.ReminderRule
 import com.timemaster.ui.editor.ReminderEditorScreen
-import com.timemaster.ui.theme.TimeMasterTheme
+import java.time.DayOfWeek
 import org.junit.Rule
 import org.junit.Test
 
 class ReminderEditorAccessibilityTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun intervalButtonReadsDurationAsHoursMinutesAndSeconds() {
+        setEditorContent(initialReminder = reminderWithInterval(1 * 3600 + 30 * 60))
+
+        composeRule.onNodeWithText("01:30:00").assertExists()
+        composeRule.onNode(hasContentDescription("$INTERVAL_LABEL\uff0c1\u5c0f\u65f630\u5206"))
+            .assertExists()
+
+        setEditorContent(initialReminder = reminderWithInterval(30 * 60))
+
+        composeRule.onNodeWithText("00:30:00").assertExists()
+        composeRule.onNode(hasContentDescription("$INTERVAL_LABEL\uff0c30\u5206\u949f"))
+            .assertExists()
+
+        setEditorContent(initialReminder = reminderWithInterval(2 * 3600 + 30 * 60 + 15))
+
+        composeRule.onNodeWithText("02:30:15").assertExists()
+        composeRule.onNode(hasContentDescription("$INTERVAL_LABEL\uff0c2\u5c0f\u65f630\u520615\u79d2"))
+            .assertExists()
+    }
+
+    @Test
+    fun startTimeButtonKeepsClockStyleText() {
+        setEditorContent(initialReminder = reminderWithInterval(30 * 60, startMinuteOfDay = 9 * 60))
+
+        composeRule.onNodeWithText("09:00").assertExists()
+    }
 
     @Test
     fun durationPickerExposesEachWheelAsAdjustableTalkBackSlider() {
@@ -102,16 +133,14 @@ class ReminderEditorAccessibilityTest {
             .assert(hasStateDescription(durationState(0, 31, 5)))
     }
 
-    private fun setEditorContent() {
+    private fun setEditorContent(initialReminder: Reminder? = null) {
         composeRule.setContent {
-            TimeMasterTheme {
-                ReminderEditorScreen(
-                    initialReminder = null,
-                    onBack = {},
-                    onSave = {},
-                    onPreviewRingtone = {}
-                )
-            }
+            ReminderEditorScreen(
+                initialReminder = initialReminder,
+                onBack = {},
+                onSave = {},
+                onPreviewRingtone = {}
+            )
         }
     }
 
@@ -172,6 +201,24 @@ class ReminderEditorAccessibilityTest {
         "$hours\u5c0f\u65f6$minutes\u5206$seconds\u79d2"
 
     private fun timeState(hours: Int, minutes: Int) = "$hours\u70b9$minutes\u5206"
+
+    private fun reminderWithInterval(
+        intervalSeconds: Int,
+        startMinuteOfDay: Int = 8 * 60
+    ) = Reminder(
+        id = 1,
+        title = "\u6d4b\u8bd5\u63d0\u9192",
+        rule = ReminderRule(
+            intervalSeconds = intervalSeconds,
+            startMinuteOfDay = startMinuteOfDay,
+            endMinuteOfDay = 22 * 60,
+            enabledDays = DayOfWeek.entries.toSet()
+        ),
+        alertMode = AlertMode.Strong,
+        ringtoneId = "gentle_chime",
+        isEnabled = true,
+        nextTriggerAtMillis = null
+    )
 
     companion object {
         private const val INTERVAL_LABEL = "\u6bcf\u9694\u591a\u5c11\u65f6\u95f4"

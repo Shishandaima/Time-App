@@ -151,6 +151,7 @@ fun ReminderEditorScreen(
         TimePickerButton(
             label = "\u6bcf\u9694\u591a\u5c11\u65f6\u95f4",
             value = formatDuration(intervalSeconds),
+            accessibilityValue = formatDurationForTalkBack(intervalSeconds),
             onClick = { pickingInterval = true },
             modifier = Modifier.fillMaxWidth()
         )
@@ -401,16 +402,42 @@ private fun formatDuration(totalSeconds: Int): String {
     return "%02d:%02d:%02d".format(hours, minutes, seconds)
 }
 
+private fun formatDurationForTalkBack(totalSeconds: Int): String {
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    val parts = buildList {
+        if (hours > 0) add("${hours}\u5c0f\u65f6")
+        if (minutes > 0) {
+            val unit = if (hours == 0 && seconds == 0) "\u5206\u949f" else "\u5206"
+            add("${minutes}$unit")
+        }
+        if (seconds > 0) add("${seconds}\u79d2")
+    }
+    return parts.takeIf { it.isNotEmpty() }?.joinToString(separator = "") ?: "0\u79d2"
+}
+
 @Composable
 private fun TimePickerButton(
     label: String,
     value: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    accessibilityValue: String? = null
 ) {
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.heightIn(min = 96.dp),
+        modifier = modifier
+            .heightIn(min = 96.dp)
+            .then(
+                if (accessibilityValue == null) {
+                    Modifier
+                } else {
+                    Modifier.semantics {
+                        contentDescription = "$label\uff0c$accessibilityValue"
+                    }
+                }
+            ),
         shape = RectangleShape,
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)
     ) {
