@@ -207,7 +207,8 @@ fun ReminderEditorScreen(
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(72.dp)
+                .height(72.dp),
+            shape = RectangleShape
         ) {
             Text("\u4fdd\u5b58\u63d0\u9192")
         }

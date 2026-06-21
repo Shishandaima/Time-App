@@ -26,6 +26,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -78,7 +79,8 @@ fun HomeScreen(
             onClick = onAddReminder,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(72.dp)
+                .height(72.dp),
+            shape = RectangleShape
         ) {
             Text("\u65b0\u5efa\u5468\u671f\u63d0\u9192")
         }
