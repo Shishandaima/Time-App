@@ -208,7 +208,7 @@ fun ReminderEditorScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(72.dp),
-            shape = RectangleShape
+            shape = MaterialTheme.shapes.medium
         ) {
             Text("\u4fdd\u5b58\u63d0\u9192")
         }
