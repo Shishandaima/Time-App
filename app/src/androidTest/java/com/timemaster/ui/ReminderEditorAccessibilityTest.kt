@@ -29,14 +29,17 @@ class ReminderEditorAccessibilityTest {
         composeRule.onNode(hasContentDescription(hourPrompt()))
             .assert(hasStateDescription(durationState(0, 30, 0)))
             .assert(hasScrollAction())
+            .assert(hasSetProgressAction())
             .assert(hasNoProgressInfo())
         composeRule.onNode(hasContentDescription(minutePrompt()))
             .assert(hasStateDescription(durationState(0, 30, 0)))
             .assert(hasScrollAction())
+            .assert(hasSetProgressAction())
             .assert(hasNoProgressInfo())
         composeRule.onNode(hasContentDescription(secondPrompt()))
             .assert(hasStateDescription(durationState(0, 30, 0)))
             .assert(hasScrollAction())
+            .assert(hasSetProgressAction())
             .assert(hasNoProgressInfo())
     }
 
@@ -49,10 +52,12 @@ class ReminderEditorAccessibilityTest {
         composeRule.onNode(hasContentDescription(hourPrompt()))
             .assert(hasStateDescription(timeState(8, 0)))
             .assert(hasScrollAction())
+            .assert(hasSetProgressAction())
             .assert(hasNoProgressInfo())
         composeRule.onNode(hasContentDescription(minutePrompt()))
             .assert(hasStateDescription(timeState(8, 0)))
             .assert(hasScrollAction())
+            .assert(hasSetProgressAction())
             .assert(hasNoProgressInfo())
     }
 
@@ -75,7 +80,7 @@ class ReminderEditorAccessibilityTest {
         composeRule.onNodeWithText(INTERVAL_LABEL).performClick()
 
         composeRule.onNode(hasContentDescription(minutePrompt()))
-            .performSemanticsAction(SemanticsActions.ScrollBy) { action -> action(0f, 1f) }
+            .performSemanticsAction(SemanticsActions.SetProgress) { action -> action(31f) }
         composeRule.waitForIdle()
 
         composeRule.onNode(hasContentDescription(minutePrompt()))
@@ -83,7 +88,7 @@ class ReminderEditorAccessibilityTest {
 
         repeat(5) {
             composeRule.onNode(hasContentDescription(secondPrompt()))
-                .performSemanticsAction(SemanticsActions.ScrollBy) { action -> action(0f, 1f) }
+                .performSemanticsAction(SemanticsActions.SetProgress) { action -> action((it + 1).toFloat()) }
             composeRule.waitForIdle()
         }
 
@@ -121,6 +126,16 @@ class ReminderEditorAccessibilityTest {
         SemanticsMatcher("has scroll action") { node ->
             try {
                 node.config[SemanticsActions.ScrollBy]
+                true
+            } catch (_: AssertionError) {
+                false
+            }
+        }
+
+    private fun hasSetProgressAction() =
+        SemanticsMatcher("has set progress action") { node ->
+            try {
+                node.config[SemanticsActions.SetProgress]
                 true
             } catch (_: AssertionError) {
                 false

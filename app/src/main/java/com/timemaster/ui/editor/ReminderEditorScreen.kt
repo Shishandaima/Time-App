@@ -53,7 +53,9 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.scrollBy
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.semantics.stateDescription
+import kotlin.math.roundToInt
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -614,6 +616,19 @@ private fun TimeColumn(
             .semantics {
                 contentDescription = "${accessibilityUnit}\uff0c\u53ef\u4e0a\u4e0b\u6ed1\u52a8\u8c03\u8282"
                 stateDescription = selectionDescription
+                setProgress { targetValue ->
+                    val nextValue = targetValue
+                        .roundToInt()
+                        .coerceIn(values.first(), values.last())
+                    updateTimeColumnSelection(
+                        nextValue = nextValue,
+                        selected = selected,
+                        onSelected = onSelected,
+                        hapticFeedback = hapticFeedback,
+                        toneGenerator = toneGenerator
+                    )
+                    true
+                }
                 scrollBy { _, y ->
                     val direction = when {
                         y > 0f -> 1
@@ -624,10 +639,13 @@ private fun TimeColumn(
                     val nextValue = values
                         .getOrNull((currentIndex + direction).coerceIn(values.indices))
                         ?: selected
-                    if (nextValue != selected) {
-                        onSelected(nextValue)
-                        performPickerFeedback(hapticFeedback, toneGenerator)
-                    }
+                    updateTimeColumnSelection(
+                        nextValue = nextValue,
+                        selected = selected,
+                        onSelected = onSelected,
+                        hapticFeedback = hapticFeedback,
+                        toneGenerator = toneGenerator
+                    )
                     true
                 }
             },
@@ -678,6 +696,19 @@ private fun durationSelectionDescription(hours: Int, minutes: Int, seconds: Int)
 
 private fun timeSelectionDescription(hours: Int, minutes: Int): String =
     "${hours}\u70b9${minutes}\u5206"
+
+private fun updateTimeColumnSelection(
+    nextValue: Int,
+    selected: Int,
+    onSelected: (Int) -> Unit,
+    hapticFeedback: androidx.compose.ui.hapticfeedback.HapticFeedback,
+    toneGenerator: ToneGenerator
+) {
+    if (nextValue != selected) {
+        onSelected(nextValue)
+        performPickerFeedback(hapticFeedback, toneGenerator)
+    }
+}
 
 private fun performPickerFeedback(
     hapticFeedback: androidx.compose.ui.hapticfeedback.HapticFeedback,
