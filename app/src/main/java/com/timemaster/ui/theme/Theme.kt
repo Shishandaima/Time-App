@@ -22,7 +22,10 @@ private val LightColors = lightColorScheme(
     primary = Color(0xFF006A60),
     onPrimary = Color.White,
     surface = Color(0xFFFFFBFE),
-    onSurface = Color(0xFF1F1B1B)
+    onSurface = Color(0xFF1F1B1B),
+    surfaceContainer = Color(0xFFF1F1F1),
+    surfaceContainerHigh = Color(0xFFEFEFEF),
+    surfaceContainerHighest = Color(0xFFECECEC)
 )
 
 private val DarkColors = darkColorScheme(
@@ -32,9 +35,9 @@ private val DarkColors = darkColorScheme(
     onSurface = Color(0xFFE8E1DF),
     background = Color(0xFF151312),
     onBackground = Color(0xFFE8E1DF),
-    surfaceContainer = Color(0xFF211E1D),
-    surfaceContainerHigh = Color(0xFF292625),
-    surfaceContainerHighest = Color(0xFF312D2C)
+    surfaceContainer = Color(0xFF222222),
+    surfaceContainerHigh = Color(0xFF2A2A2A),
+    surfaceContainerHighest = Color(0xFF303030)
 )
 
 private const val SETTINGS_PREFS = "app_settings"

@@ -68,6 +68,7 @@ import com.timemaster.domain.AlertMode
 import com.timemaster.domain.Reminder
 import com.timemaster.domain.ReminderRule
 import com.timemaster.sound.RingtoneCatalog
+import com.timemaster.ui.accessibility.pageEntryTitleFocus
 import java.time.DayOfWeek
 import kotlin.math.abs
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -142,6 +143,7 @@ fun ReminderEditorScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 64.dp)
+                    .pageEntryTitleFocus()
             )
         }
 

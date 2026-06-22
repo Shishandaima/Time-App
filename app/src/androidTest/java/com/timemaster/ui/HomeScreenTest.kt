@@ -1,6 +1,7 @@
 package com.timemaster.ui
 
 import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -42,6 +43,10 @@ class HomeScreenTest {
         composeRule
             .onNodeWithContentDescription("\u8bbe\u7f6e")
             .assertHasClickAction()
+
+        composeRule
+            .onNodeWithText("\u65f6\u95f4\u7ba1\u7406\u5927\u5e08")
+            .assert(hasHeading())
     }
 
     @Test
@@ -93,5 +98,10 @@ class HomeScreenTest {
             } catch (_: AssertionError) {
                 false
             }
+        }
+
+    private fun hasHeading() =
+        SemanticsMatcher("has heading") { node ->
+            node.config.contains(SemanticsProperties.Heading)
         }
 }

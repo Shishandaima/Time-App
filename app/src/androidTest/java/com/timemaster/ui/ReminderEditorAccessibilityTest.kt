@@ -34,6 +34,14 @@ class ReminderEditorAccessibilityTest {
     }
 
     @Test
+    fun editorTitleIsMarkedAsHeadingForTalkBackFocus() {
+        setEditorContent()
+
+        composeRule.onNodeWithText("\u65b0\u5efa\u5468\u671f\u63d0\u9192")
+            .assert(hasHeading())
+    }
+
+    @Test
     fun intervalButtonReadsDurationAsHoursMinutesAndSeconds() {
         setEditorContent(initialReminder = reminderWithInterval(1 * 3600 + 30 * 60))
 
@@ -169,6 +177,11 @@ class ReminderEditorAccessibilityTest {
 
     private fun hasStateDescription(value: String) =
         SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, value)
+
+    private fun hasHeading() =
+        SemanticsMatcher("has heading") { node ->
+            node.config.contains(SemanticsProperties.Heading)
+        }
 
     private fun hasScrollAction() =
         SemanticsMatcher("has scroll action") { node ->
