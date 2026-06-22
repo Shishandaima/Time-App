@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -87,6 +88,7 @@ fun HomeScreen(
                 onClick = onAddReminder,
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
+                    .offset(x = 20.dp)
                     .size(64.dp)
                     .semantics {
                         contentDescription = "\u65b0\u5efa\u5468\u671f\u63d0\u9192"
