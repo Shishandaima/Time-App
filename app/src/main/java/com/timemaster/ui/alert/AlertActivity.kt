@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.core.app.NotificationManagerCompat
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,9 +23,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.timemaster.TimeMasterApplication
+import com.timemaster.ui.theme.ThemeMode
 import com.timemaster.ui.theme.readThemeMode
 import com.timemaster.ui.theme.TimeMasterTheme
 
@@ -48,10 +51,15 @@ class AlertActivity : ComponentActivity() {
         }
         app.ringtonePlayer.stop()
 
+        val themeMode = readThemeMode(this)
         setContent {
-            TimeMasterTheme(themeMode = readThemeMode(this)) {
+            TimeMasterTheme(themeMode = themeMode) {
                 AlertScreen(
                     title = title,
+                    backgroundColor = alertBackgroundColor(
+                        themeMode = themeMode,
+                        systemInDarkTheme = isSystemInDarkTheme()
+                    ),
                     onDismiss = {
                         app.ringtonePlayer.stop()
                         stopPlaybackOnDestroy = false
@@ -105,12 +113,13 @@ class AlertActivity : ComponentActivity() {
 @Composable
 private fun AlertScreen(
     title: String,
+    backgroundColor: Color,
     onDismiss: () -> Unit,
     onSnooze: () -> Unit
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.errorContainer
+        color = backgroundColor
     ) {
         Column(
             modifier = Modifier
@@ -154,3 +163,13 @@ private fun AlertScreen(
         }
     }
 }
+
+internal fun alertBackgroundColor(
+    themeMode: ThemeMode,
+    systemInDarkTheme: Boolean
+): Color =
+    when (themeMode) {
+        ThemeMode.Light -> Color.White
+        ThemeMode.Dark -> Color.Black
+        ThemeMode.System -> if (systemInDarkTheme) Color.Black else Color.White
+    }
