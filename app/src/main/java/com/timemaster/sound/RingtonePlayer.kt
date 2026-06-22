@@ -1,7 +1,9 @@
 package com.timemaster.sound
 
 import android.content.Context
+import android.app.NotificationManager
 import android.media.AudioAttributes
+import android.media.AudioManager
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.Handler
@@ -14,6 +16,9 @@ class RingtonePlayer(
     context: Context
 ) {
     private val appContext = context.applicationContext
+    private val audioManager: AudioManager? = appContext.getSystemService(AudioManager::class.java)
+    private val notificationManager: NotificationManager? =
+        appContext.getSystemService(NotificationManager::class.java)
     private val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         appContext.getSystemService(VibratorManager::class.java)?.defaultVibrator
     } else {
@@ -26,12 +31,12 @@ class RingtonePlayer(
 
     @Synchronized
     fun playLooping(ringtoneId: String) {
-        start(ringtoneId = ringtoneId, loop = true)
+        start(ringtoneId = ringtoneId, loop = true, playSound = shouldPlayStrongAlertSound())
     }
 
     @Synchronized
     fun preview(ringtoneId: String) {
-        start(ringtoneId = ringtoneId, loop = false)
+        start(ringtoneId = ringtoneId, loop = false, playSound = true)
     }
 
     @Synchronized
@@ -42,8 +47,15 @@ class RingtonePlayer(
         vibrator?.cancel()
     }
 
-    private fun start(ringtoneId: String, loop: Boolean) {
+    private fun start(ringtoneId: String, loop: Boolean, playSound: Boolean) {
         stop()
+        if (!playSound) {
+            if (loop) {
+                startVibration()
+                autoStopHandler.postDelayed(autoStopRunnable, AUTO_STOP_MILLIS)
+            }
+            return
+        }
         val option = RingtoneCatalog.byId(ringtoneId)
         val nextPlayer = MediaPlayer.create(appContext, option.rawRes) ?: return
         nextPlayer.isLooping = loop
@@ -64,6 +76,13 @@ class RingtonePlayer(
             autoStopHandler.postDelayed(autoStopRunnable, AUTO_STOP_MILLIS)
         }
     }
+
+    private fun shouldPlayStrongAlertSound(): Boolean =
+        shouldPlayAudibleStrongAlert(
+            ringerMode = audioManager?.ringerMode ?: AudioManager.RINGER_MODE_NORMAL,
+            interruptionFilter = notificationManager?.currentInterruptionFilter
+                ?: NotificationManager.INTERRUPTION_FILTER_UNKNOWN
+        )
 
     private fun startVibration() {
         val currentVibrator = vibrator ?: return
