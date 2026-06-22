@@ -6,6 +6,14 @@ import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -16,7 +24,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -33,6 +43,15 @@ import com.timemaster.ui.editor.ReminderEditorScreen
 import com.timemaster.ui.home.HomeScreen
 import com.timemaster.ui.settings.SettingsScreen
 import com.timemaster.ui.theme.ThemeMode
+import com.timemaster.update.DownloadProgress
+import com.timemaster.update.GitHubReleaseClient
+import com.timemaster.update.ReleaseInfo
+import com.timemaster.update.UpdateCheckResult
+import com.timemaster.update.canInstallDownloadedApk
+import com.timemaster.update.installDownloadedApk
+import com.timemaster.update.openInstallPermissionSettings
+import com.timemaster.update.updateApkDestination
+import java.io.File
 import java.time.DayOfWeek
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -54,9 +73,12 @@ fun TimeMasterApp(
     }
     val reminders by repository.observeReminders().collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
+    val releaseClient = remember { GitHubReleaseClient() }
     var editingReminder by remember { mutableStateOf<Reminder?>(null) }
     var showingEditor by remember { mutableStateOf(false) }
     var showingSettings by remember { mutableStateOf(false) }
+    var updateDialog by remember { mutableStateOf<UpdateDialogState?>(null) }
+    var downloadedUpdateApk by remember { mutableStateOf<File?>(null) }
     var permissionRefresh by remember { mutableStateOf(0) }
     var requestedInitialNotificationPermission by rememberSaveable {
         mutableStateOf(permissionPrefs.getBoolean("initial_notification_requested", false))
@@ -82,6 +104,11 @@ fun TimeMasterApp(
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 permissionRefresh++
+                val apk = downloadedUpdateApk
+                if (apk != null && canInstallDownloadedApk(context)) {
+                    installDownloadedApk(context, apk)
+                    downloadedUpdateApk = null
+                }
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -157,6 +184,20 @@ fun TimeMasterApp(
         SettingsScreen(
             themeMode = themeMode,
             appVersion = appVersion,
+            onCheckUpdate = {
+                updateDialog = UpdateDialogState.Checking
+                scope.launch {
+                    updateDialog = runCatching {
+                        when (val result = releaseClient.checkForUpdate(appVersion)) {
+                            UpdateCheckResult.Latest -> UpdateDialogState.Latest
+                            is UpdateCheckResult.UpdateAvailable ->
+                                UpdateDialogState.Available(result.release, appVersion)
+                        }
+                    }.getOrElse { error ->
+                        UpdateDialogState.Error(error.userMessage())
+                    }
+                }
+            },
             onThemeModeChange = onThemeModeChange,
             onBack = { showingSettings = false }
         )
@@ -196,6 +237,222 @@ fun TimeMasterApp(
             },
             permissionWarnings = permissionWarnings
         )
+    }
+
+    UpdateDialog(
+        state = updateDialog,
+        onDismiss = { updateDialog = null },
+        onRetryCheck = {
+            updateDialog = UpdateDialogState.Checking
+            scope.launch {
+                updateDialog = runCatching {
+                    when (val result = releaseClient.checkForUpdate(appVersion)) {
+                        UpdateCheckResult.Latest -> UpdateDialogState.Latest
+                        is UpdateCheckResult.UpdateAvailable ->
+                            UpdateDialogState.Available(result.release, appVersion)
+                    }
+                }.getOrElse { error ->
+                    UpdateDialogState.Error(error.userMessage())
+                }
+            }
+        },
+        onInstall = { release ->
+            startUpdateDownload(
+                context = context,
+                scope = scope,
+                releaseClient = releaseClient,
+                release = release,
+                setState = { updateDialog = it },
+                onDownloaded = { apk ->
+                    if (canInstallDownloadedApk(context)) {
+                        installDownloadedApk(context, apk)
+                        updateDialog = null
+                    } else {
+                        downloadedUpdateApk = apk
+                        updateDialog = UpdateDialogState.InstallPermissionRequired
+                        openInstallPermissionSettings(context)
+                    }
+                }
+            )
+        },
+        onRetryDownload = { release ->
+            startUpdateDownload(
+                context = context,
+                scope = scope,
+                releaseClient = releaseClient,
+                release = release,
+                setState = { updateDialog = it },
+                onDownloaded = { apk ->
+                    if (canInstallDownloadedApk(context)) {
+                        installDownloadedApk(context, apk)
+                        updateDialog = null
+                    } else {
+                        downloadedUpdateApk = apk
+                        updateDialog = UpdateDialogState.InstallPermissionRequired
+                        openInstallPermissionSettings(context)
+                    }
+                }
+            )
+        }
+    )
+}
+
+private sealed interface UpdateDialogState {
+    data object Checking : UpdateDialogState
+    data object Latest : UpdateDialogState
+    data class Available(val release: ReleaseInfo, val currentVersion: String) : UpdateDialogState
+    data class Downloading(val release: ReleaseInfo, val progress: DownloadProgress) : UpdateDialogState
+    data class DownloadFailed(val release: ReleaseInfo, val message: String) : UpdateDialogState
+    data object InstallPermissionRequired : UpdateDialogState
+    data class Error(val message: String) : UpdateDialogState
+}
+
+@Composable
+private fun UpdateDialog(
+    state: UpdateDialogState?,
+    onDismiss: () -> Unit,
+    onRetryCheck: () -> Unit,
+    onInstall: (ReleaseInfo) -> Unit,
+    onRetryDownload: (ReleaseInfo) -> Unit
+) {
+    when (state) {
+        null -> Unit
+        UpdateDialogState.Checking -> AlertDialog(
+            onDismissRequest = {},
+            title = { Text("\u68c0\u67e5\u66f4\u65b0") },
+            text = { Text("\u6b63\u5728\u83b7\u53d6\u6700\u65b0\u7248\u672c\u4fe1\u606f\u2026") },
+            confirmButton = {}
+        )
+        UpdateDialogState.Latest -> AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text("\u68c0\u67e5\u66f4\u65b0") },
+            text = { Text("\u5f53\u524d\u5df2\u662f\u6700\u65b0\u7248\u672c") },
+            confirmButton = {
+                TextButton(onClick = onDismiss) { Text("\u786e\u5b9a") }
+            }
+        )
+        is UpdateDialogState.Available -> AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text("\u53d1\u73b0\u65b0\u7248\u672c") },
+            text = { ReleaseInfoText(state.release, state.currentVersion) },
+            confirmButton = {
+                TextButton(onClick = { onInstall(state.release) }) { Text("\u7acb\u5373\u66f4\u65b0") }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) { Text("\u53d6\u6d88") }
+            }
+        )
+        is UpdateDialogState.Downloading -> AlertDialog(
+            onDismissRequest = {},
+            title = { Text("\u6b63\u5728\u4e0b\u8f7d") },
+            text = { DownloadProgressText(state.progress) },
+            confirmButton = {}
+        )
+        is UpdateDialogState.DownloadFailed -> AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text("\u4e0b\u8f7d\u5931\u8d25") },
+            text = { Text(state.message) },
+            confirmButton = {
+                TextButton(onClick = { onRetryDownload(state.release) }) { Text("\u91cd\u8bd5") }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) { Text("\u53d6\u6d88") }
+            }
+        )
+        UpdateDialogState.InstallPermissionRequired -> AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text("\u9700\u8981\u5b89\u88c5\u6743\u9650") },
+            text = { Text("\u8bf7\u5141\u8bb8\u5b89\u88c5\u672a\u77e5\u6765\u6e90\u5e94\u7528\uff0c\u6388\u6743\u540e\u5c06\u7ee7\u7eed\u5b89\u88c5\u3002") },
+            confirmButton = {
+                TextButton(onClick = onDismiss) { Text("\u786e\u5b9a") }
+            }
+        )
+        is UpdateDialogState.Error -> AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text("\u68c0\u67e5\u5931\u8d25") },
+            text = { Text(state.message) },
+            confirmButton = {
+                TextButton(onClick = onRetryCheck) { Text("\u91cd\u8bd5") }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) { Text("\u53d6\u6d88") }
+            }
+        )
+    }
+}
+
+@Composable
+private fun ReleaseInfoText(release: ReleaseInfo, currentVersion: String) {
+    Column(
+        modifier = Modifier
+            .verticalScroll(rememberScrollState())
+    ) {
+        Text("\u6700\u65b0\u7248\u672c\u53f7\uff1a${release.version}")
+        Text("\u53d1\u5e03\u65f6\u95f4\uff1a${release.publishedAt.ifBlank { "\u672a\u63d0\u4f9b" }}")
+        Text("\u5f53\u524d\u7248\u672c\u53f7\uff1a$currentVersion")
+        Text(
+            text = "\u66f4\u65b0\u65e5\u5fd7\uff1a\n${release.releaseNotes.ifBlank { "\u672a\u63d0\u4f9b" }}",
+            modifier = Modifier.padding(top = 12.dp)
+        )
+    }
+}
+
+@Composable
+private fun DownloadProgressText(progress: DownloadProgress) {
+    Column {
+        LinearProgressIndicator(progress = { progress.percent / 100f })
+        Text("${progress.percent}%")
+        Text(
+            "\u5df2\u4e0b\u8f7d\uff1a${formatBytes(progress.downloadedBytes)} / " +
+                "\u603b\u5927\u5c0f\uff1a${formatBytes(progress.totalBytes)}"
+        )
+    }
+}
+
+private fun startUpdateDownload(
+    context: Context,
+    scope: kotlinx.coroutines.CoroutineScope,
+    releaseClient: GitHubReleaseClient,
+    release: ReleaseInfo,
+    setState: (UpdateDialogState) -> Unit,
+    onDownloaded: (File) -> Unit
+) {
+    val apkAsset = release.apkAsset ?: run {
+        setState(UpdateDialogState.DownloadFailed(release, "\u6700\u65b0 Release \u4e2d\u672a\u627e\u5230 APK \u6587\u4ef6"))
+        return
+    }
+    setState(UpdateDialogState.Downloading(release, DownloadProgress(0L, apkAsset.sizeBytes)))
+    scope.launch {
+        runCatching {
+            releaseClient.downloadApk(
+                asset = apkAsset,
+                destination = updateApkDestination(context)
+            ) { progress ->
+                setState(UpdateDialogState.Downloading(release, progress))
+            }
+        }.onSuccess(onDownloaded)
+            .onFailure { error ->
+                setState(UpdateDialogState.DownloadFailed(release, error.userMessage()))
+            }
+    }
+}
+
+private fun Throwable.userMessage(): String =
+    message?.takeIf { it.isNotBlank() } ?: "\u7f51\u7edc\u6216\u6587\u4ef6\u5904\u7406\u5931\u8d25"
+
+private fun formatBytes(bytes: Long): String {
+    if (bytes <= 0L) return "\u672a\u77e5"
+    val units = listOf("B", "KB", "MB", "GB")
+    var value = bytes.toDouble()
+    var unitIndex = 0
+    while (value >= 1024 && unitIndex < units.lastIndex) {
+        value /= 1024
+        unitIndex++
+    }
+    return if (unitIndex == 0) {
+        "${bytes}${units[unitIndex]}"
+    } else {
+        String.format("%.1f%s", value, units[unitIndex])
     }
 }
 

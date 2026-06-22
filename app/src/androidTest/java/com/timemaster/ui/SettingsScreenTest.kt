@@ -19,6 +19,7 @@ class SettingsScreenTest {
             SettingsScreen(
                 themeMode = ThemeMode.System,
                 appVersion = "0.4.5",
+                onCheckUpdate = {},
                 onThemeModeChange = {},
                 onBack = {}
             )
@@ -32,7 +33,7 @@ class SettingsScreenTest {
         composeRule.onNodeWithText("\u6df1\u8272").assertExists()
         composeRule.onNodeWithText("\u8ddf\u968f\u7cfb\u7edf").assertExists()
         composeRule.onNodeWithText("\u5173\u4e8e").assertExists()
-        composeRule.onNodeWithText("\u68c0\u67e5\u66f4\u65b0").assertExists()
+        composeRule.onNodeWithText("\u68c0\u67e5\u66f4\u65b0").assertHasClickAction()
         composeRule.onNodeWithText("APP\u7248\u672c\u53f7").assertExists()
         composeRule.onNodeWithText("0.4.5").assertExists()
     }

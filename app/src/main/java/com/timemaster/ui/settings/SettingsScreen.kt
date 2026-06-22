@@ -33,6 +33,7 @@ import com.timemaster.ui.theme.ThemeMode
 fun SettingsScreen(
     themeMode: ThemeMode,
     appVersion: String,
+    onCheckUpdate: () -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit,
     onBack: () -> Unit
 ) {
@@ -93,7 +94,10 @@ fun SettingsScreen(
         }
 
         SettingsSection(title = "\u5173\u4e8e") {
-            SettingsValueRow(label = "\u68c0\u67e5\u66f4\u65b0")
+            SettingsValueRow(
+                label = "\u68c0\u67e5\u66f4\u65b0",
+                onClick = onCheckUpdate
+            )
             SettingsValueRow(label = "APP\u7248\u672c\u53f7", value = appVersion)
         }
     }
@@ -145,11 +149,18 @@ private fun ThemeOptionRow(
 @Composable
 private fun SettingsValueRow(
     label: String,
-    value: String? = null
+    value: String? = null,
+    onClick: (() -> Unit)? = null
 ) {
-    Row(
-        modifier = Modifier
+    val rowModifier = if (onClick == null) {
+        Modifier.fillMaxWidth()
+    } else {
+        Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
+    }
+    Row(
+        modifier = rowModifier
             .padding(vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
