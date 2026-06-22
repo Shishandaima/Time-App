@@ -3,6 +3,7 @@ package com.timemaster.ui.theme
 import android.content.Context
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -76,7 +77,11 @@ fun TimeMasterTheme(
     }
     MaterialTheme(
         colorScheme = if (useDarkTheme) DarkColors else LightColors,
-        typography = TimeMasterTypography,
-        content = content
-    )
+        typography = TimeMasterTypography
+    ) {
+        Surface(
+            color = MaterialTheme.colorScheme.surface,
+            content = content
+        )
+    }
 }
