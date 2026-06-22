@@ -23,6 +23,7 @@ class HomeScreenTest {
         composeRule.setContent {
             HomeScreen(
                 reminders = emptyList(),
+                onOpenSettings = {},
                 onAddReminder = {},
                 onEditReminder = {},
                 onToggleReminder = { _, _ -> },
@@ -36,6 +37,10 @@ class HomeScreenTest {
 
         composeRule
             .onNodeWithContentDescription("\u65b0\u5efa\u5468\u671f\u63d0\u9192")
+            .assertHasClickAction()
+
+        composeRule
+            .onNodeWithContentDescription("\u8bbe\u7f6e")
             .assertHasClickAction()
     }
 
@@ -60,6 +65,7 @@ class HomeScreenTest {
         composeRule.setContent {
             HomeScreen(
                 reminders = listOf(reminder),
+                onOpenSettings = {},
                 onAddReminder = {},
                 onEditReminder = {},
                 onToggleReminder = { _, _ -> },

@@ -49,6 +49,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun HomeScreen(
     reminders: List<Reminder>,
+    onOpenSettings: () -> Unit,
     onAddReminder: () -> Unit,
     onEditReminder: (Reminder) -> Unit,
     onToggleReminder: (Reminder, Boolean) -> Unit,
@@ -82,8 +83,26 @@ fun HomeScreen(
                 text = "\u65f6\u95f4\u7ba1\u7406\u5927\u5e08",
                 style = MaterialTheme.typography.displaySmall,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 64.dp)
             )
+            IconButton(
+                onClick = onOpenSettings,
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .offset(x = (-20).dp)
+                    .size(64.dp)
+                    .semantics {
+                        contentDescription = "\u8bbe\u7f6e"
+                    }
+            ) {
+                Text(
+                    text = "\u2699",
+                    style = MaterialTheme.typography.headlineLarge,
+                    textAlign = TextAlign.Center
+                )
+            }
             IconButton(
                 onClick = onAddReminder,
                 modifier = Modifier

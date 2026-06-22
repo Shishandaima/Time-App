@@ -31,6 +31,8 @@ import com.timemaster.permissions.canScheduleExactAlarms
 import com.timemaster.permissions.openExactAlarmSettings
 import com.timemaster.ui.editor.ReminderEditorScreen
 import com.timemaster.ui.home.HomeScreen
+import com.timemaster.ui.settings.SettingsScreen
+import com.timemaster.ui.theme.ThemeMode
 import java.time.DayOfWeek
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -40,7 +42,10 @@ import kotlinx.coroutines.launch
 fun TimeMasterApp(
     repository: ReminderRepository,
     alarmScheduler: AlarmScheduler,
-    onPreviewRingtone: (String) -> Unit = {}
+    onPreviewRingtone: (String) -> Unit = {},
+    themeMode: ThemeMode = ThemeMode.System,
+    onThemeModeChange: (ThemeMode) -> Unit = {},
+    appVersion: String = ""
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -51,6 +56,7 @@ fun TimeMasterApp(
     val scope = rememberCoroutineScope()
     var editingReminder by remember { mutableStateOf<Reminder?>(null) }
     var showingEditor by remember { mutableStateOf(false) }
+    var showingSettings by remember { mutableStateOf(false) }
     var permissionRefresh by remember { mutableStateOf(0) }
     var requestedInitialNotificationPermission by rememberSaveable {
         mutableStateOf(permissionPrefs.getBoolean("initial_notification_requested", false))
@@ -144,9 +150,20 @@ fun TimeMasterApp(
             },
             onPreviewRingtone = onPreviewRingtone
         )
+    } else if (showingSettings) {
+        BackHandler {
+            showingSettings = false
+        }
+        SettingsScreen(
+            themeMode = themeMode,
+            appVersion = appVersion,
+            onThemeModeChange = onThemeModeChange,
+            onBack = { showingSettings = false }
+        )
     } else {
         HomeScreen(
             reminders = reminders,
+            onOpenSettings = { showingSettings = true },
             onAddReminder = {
                 editingReminder = null
                 showingEditor = true
