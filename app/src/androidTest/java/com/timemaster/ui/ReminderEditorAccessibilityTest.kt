@@ -10,6 +10,7 @@ import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
@@ -18,6 +19,8 @@ import com.timemaster.domain.Reminder
 import com.timemaster.domain.ReminderRule
 import com.timemaster.ui.editor.ReminderEditorScreen
 import java.time.DayOfWeek
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -39,6 +42,23 @@ class ReminderEditorAccessibilityTest {
 
         composeRule.onNodeWithText("\u65b0\u5efa\u5468\u671f\u63d0\u9192")
             .assert(hasHeading())
+    }
+
+    @Test
+    fun weekdayButtonsStayOnOneRowInLeftToRightOrder() {
+        setEditorContent()
+
+        val bounds = (1..7).map { day ->
+            composeRule.onNodeWithText(day.toString()).getUnclippedBoundsInRoot()
+        }
+        val firstTop = bounds.first().top.value
+
+        bounds.forEach { bound ->
+            assertEquals(firstTop, bound.top.value, 0.5f)
+        }
+        bounds.zipWithNext().forEach { (left, right) ->
+            assertTrue(right.left > left.left)
+        }
     }
 
     @Test

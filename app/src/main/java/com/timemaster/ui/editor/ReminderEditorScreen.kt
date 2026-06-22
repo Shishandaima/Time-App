@@ -263,24 +263,33 @@ private fun WeekdaySelector(
     selectedDays: Set<DayOfWeek>,
     onSelectedDaysChange: (Set<DayOfWeek>) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        DayOfWeek.entries.chunked(4).forEach { rowDays ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                rowDays.forEach { day ->
-                    FilterChip(
-                        selected = day in selectedDays,
-                        onClick = {
-                            val next = if (day in selectedDays) selectedDays - day else selectedDays + day
-                            onSelectedDaysChange(next)
-                        },
-                        label = { Text(day.value.toString()) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Color(0xFF006A60),
-                            selectedLabelColor = Color.White
-                        )
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        DayOfWeek.entries.forEach { day ->
+            FilterChip(
+                selected = day in selectedDays,
+                onClick = {
+                    val next = if (day in selectedDays) selectedDays - day else selectedDays + day
+                    onSelectedDaysChange(next)
+                },
+                label = {
+                    Text(
+                        text = day.value.toString(),
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center,
+                        maxLines = 1
                     )
-                }
-            }
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = 48.dp),
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = Color(0xFF006A60),
+                    selectedLabelColor = Color.White
+                )
+            )
         }
     }
 }
