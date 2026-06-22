@@ -1,6 +1,7 @@
 package com.timemaster.ui.home
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,6 +50,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun HomeScreen(
     reminders: List<Reminder>,
+    onOpenSettings: () -> Unit,
     onAddReminder: () -> Unit,
     onEditReminder: (Reminder) -> Unit,
     onToggleReminder: (Reminder, Boolean) -> Unit,
@@ -68,6 +70,7 @@ fun HomeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
             .statusBarsPadding()
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)
@@ -82,8 +85,26 @@ fun HomeScreen(
                 text = "\u65f6\u95f4\u7ba1\u7406\u5927\u5e08",
                 style = MaterialTheme.typography.displaySmall,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 64.dp)
             )
+            IconButton(
+                onClick = onOpenSettings,
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .offset(x = (-20).dp)
+                    .size(64.dp)
+                    .semantics {
+                        contentDescription = "\u8bbe\u7f6e"
+                    }
+            ) {
+                Text(
+                    text = "\u2699",
+                    style = MaterialTheme.typography.headlineLarge,
+                    textAlign = TextAlign.Center
+                )
+            }
             IconButton(
                 onClick = onAddReminder,
                 modifier = Modifier

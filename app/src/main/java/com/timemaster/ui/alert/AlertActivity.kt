@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.timemaster.TimeMasterApplication
+import com.timemaster.ui.theme.readThemeMode
 import com.timemaster.ui.theme.TimeMasterTheme
 
 class AlertActivity : ComponentActivity() {
@@ -48,7 +49,7 @@ class AlertActivity : ComponentActivity() {
         app.ringtonePlayer.stop()
 
         setContent {
-            TimeMasterTheme {
+            TimeMasterTheme(themeMode = readThemeMode(this)) {
                 AlertScreen(
                     title = title,
                     onDismiss = {
