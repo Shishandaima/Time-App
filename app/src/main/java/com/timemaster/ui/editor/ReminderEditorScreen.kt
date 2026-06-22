@@ -117,7 +117,11 @@ fun ReminderEditorScreen(
                 onClick = onBack,
                 modifier = Modifier
                     .align(Alignment.CenterStart)
+                    .offset(x = (-20).dp)
                     .size(56.dp)
+                    .semantics {
+                        contentDescription = "\u8fd4\u56de"
+                    }
             ) {
                 Box(
                     modifier = Modifier.fillMaxSize(),

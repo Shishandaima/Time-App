@@ -1,5 +1,6 @@
 package com.timemaster.ui
 
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -23,6 +24,14 @@ import org.junit.Test
 class ReminderEditorAccessibilityTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun backButtonReadsReturnForTalkBack() {
+        setEditorContent()
+
+        composeRule.onNode(hasContentDescription("\u8fd4\u56de"))
+            .assertHasClickAction()
+    }
 
     @Test
     fun intervalButtonReadsDurationAsHoursMinutesAndSeconds() {
