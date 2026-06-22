@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import com.timemaster.domain.AlertMode
 import com.timemaster.domain.Reminder
@@ -18,7 +19,7 @@ class HomeScreenTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun emptyHomeShowsAddReminderButton() {
+    fun emptyHomeShowsAddReminderPlusButtonWithReadableLabel() {
         composeRule.setContent {
             HomeScreen(
                 reminders = emptyList(),
@@ -30,7 +31,11 @@ class HomeScreenTest {
         }
 
         composeRule
-            .onNodeWithText("\u65b0\u5efa\u5468\u671f\u63d0\u9192")
+            .onNodeWithText("+")
+            .assertExists()
+
+        composeRule
+            .onNodeWithContentDescription("\u65b0\u5efa\u5468\u671f\u63d0\u9192")
             .assertHasClickAction()
     }
 
