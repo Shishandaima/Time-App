@@ -22,7 +22,10 @@ private val LightColors = lightColorScheme(
     primary = Color(0xFF006A60),
     onPrimary = Color.White,
     surface = Color(0xFFFFFBFE),
-    onSurface = Color(0xFF1F1B1B)
+    onSurface = Color(0xFF1F1B1B),
+    surfaceContainer = Color(0xFFFCF6F4),
+    surfaceContainerHigh = Color(0xFFF9F2F0),
+    surfaceContainerHighest = Color(0xFFF6EFED)
 )
 
 private val DarkColors = darkColorScheme(
