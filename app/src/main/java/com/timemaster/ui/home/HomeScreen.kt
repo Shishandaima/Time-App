@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import com.timemaster.domain.AlertMode
 import com.timemaster.domain.Reminder
 import com.timemaster.domain.ReminderRule
+import com.timemaster.ui.accessibility.pageEntryTitleFocus
 import java.time.Instant
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -88,6 +89,7 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 64.dp)
+                    .pageEntryTitleFocus()
             )
             IconButton(
                 onClick = onOpenSettings,

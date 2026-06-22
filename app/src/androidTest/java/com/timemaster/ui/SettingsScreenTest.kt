@@ -1,5 +1,8 @@
 package com.timemaster.ui
 
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -26,6 +29,7 @@ class SettingsScreenTest {
         }
 
         composeRule.onNodeWithText("\u8bbe\u7f6e").assertExists()
+        composeRule.onNodeWithText("\u8bbe\u7f6e").assert(hasHeading())
         composeRule.onNodeWithContentDescription("\u8fd4\u56de").assertHasClickAction()
         composeRule.onNodeWithText("\u901a\u7528").assertExists()
         composeRule.onNodeWithText("\u4e3b\u9898").assertExists()
@@ -37,4 +41,9 @@ class SettingsScreenTest {
         composeRule.onNodeWithText("APP\u7248\u672c\u53f7").assertExists()
         composeRule.onNodeWithText("0.4.5").assertExists()
     }
+
+    private fun hasHeading() =
+        SemanticsMatcher("has heading") { node ->
+            node.config.contains(SemanticsProperties.Heading)
+        }
 }
