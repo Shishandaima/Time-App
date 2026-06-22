@@ -1,5 +1,6 @@
 package com.timemaster.ui.settings
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +39,7 @@ fun SettingsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
             .statusBarsPadding()
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)

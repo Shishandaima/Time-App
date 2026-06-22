@@ -102,6 +102,7 @@ fun ReminderEditorScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(20.dp),

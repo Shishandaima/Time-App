@@ -8,7 +8,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import com.timemaster.ui.TimeMasterApp
-import com.timemaster.ui.theme.ThemeMode
+import com.timemaster.ui.theme.readThemeMode
+import com.timemaster.ui.theme.saveThemeMode
 import com.timemaster.ui.theme.TimeMasterTheme
 
 class MainActivity : ComponentActivity() {
@@ -17,14 +18,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val settings = getSharedPreferences("app_settings", MODE_PRIVATE)
         setContent {
             var themeMode by rememberSaveable {
-                mutableStateOf(
-                    runCatching {
-                        ThemeMode.valueOf(settings.getString("theme_mode", ThemeMode.System.name)!!)
-                    }.getOrDefault(ThemeMode.System)
-                )
+                mutableStateOf(readThemeMode(this))
             }
             TimeMasterTheme(themeMode = themeMode) {
                 TimeMasterApp(
@@ -34,7 +30,7 @@ class MainActivity : ComponentActivity() {
                     themeMode = themeMode,
                     onThemeModeChange = { nextMode ->
                         themeMode = nextMode
-                        settings.edit().putString("theme_mode", nextMode.name).apply()
+                        saveThemeMode(this, nextMode)
                     },
                     appVersion = BuildConfig.VERSION_NAME
                 )
