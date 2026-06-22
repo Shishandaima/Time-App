@@ -2,18 +2,20 @@ package com.timemaster.ui.home
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
@@ -25,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -68,20 +71,33 @@ fun HomeScreen(
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
-        Text(
-            text = "\u65f6\u95f4\u7ba1\u7406\u5927\u5e08",
-            style = MaterialTheme.typography.displaySmall,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
-        )
-        Button(
-            onClick = onAddReminder,
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(72.dp),
-            shape = MaterialTheme.shapes.medium
+            contentAlignment = Alignment.Center
         ) {
-            Text("\u65b0\u5efa\u5468\u671f\u63d0\u9192")
+            Text(
+                text = "\u65f6\u95f4\u7ba1\u7406\u5927\u5e08",
+                style = MaterialTheme.typography.displaySmall,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+            IconButton(
+                onClick = onAddReminder,
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .size(64.dp)
+                    .semantics {
+                        contentDescription = "\u65b0\u5efa\u5468\u671f\u63d0\u9192"
+                    }
+            ) {
+                Text(
+                    text = "+",
+                    style = MaterialTheme.typography.displaySmall,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
 
         permissionWarnings.forEach { warning ->
