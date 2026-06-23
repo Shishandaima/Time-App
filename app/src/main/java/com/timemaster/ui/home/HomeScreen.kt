@@ -59,7 +59,6 @@ sealed interface HomeFocusTarget {
 fun HomeScreen(
     reminders: List<Reminder>,
     focusTarget: HomeFocusTarget? = null,
-    onHomeFocusTargetConsumed: () -> Unit = {},
     onOpenSettings: () -> Unit,
     onAddReminder: () -> Unit,
     onEditReminder: (Reminder) -> Unit,
@@ -108,8 +107,7 @@ fun HomeScreen(
                     .offset(x = (-20).dp)
                     .size(64.dp)
                     .requestFocusOnEntry(
-                        focusKey = focusTarget.takeIf { it == HomeFocusTarget.SettingsButton },
-                        onFocusRequested = onHomeFocusTargetConsumed
+                        focusKey = focusTarget.takeIf { it == HomeFocusTarget.SettingsButton }
                     )
                     .semantics {
                         contentDescription = "\u8bbe\u7f6e"
@@ -128,8 +126,7 @@ fun HomeScreen(
                     .offset(x = 20.dp)
                     .size(64.dp)
                     .requestFocusOnEntry(
-                        focusKey = focusTarget.takeIf { it == HomeFocusTarget.AddReminderButton },
-                        onFocusRequested = onHomeFocusTargetConsumed
+                        focusKey = focusTarget.takeIf { it == HomeFocusTarget.AddReminderButton }
                     )
                     .semantics {
                         contentDescription = "\u65b0\u5efa\u5468\u671f\u63d0\u9192"
@@ -167,7 +164,6 @@ fun HomeScreen(
                                 it is HomeFocusTarget.ReminderCard &&
                                     it.reminderId == reminder.id
                             },
-                        onFocusRequested = onHomeFocusTargetConsumed,
                         onEdit = { onEditReminder(reminder) },
                         onToggle = { enabled -> onToggleReminder(reminder, enabled) },
                         onDelete = { deleteCandidate = reminder }
@@ -226,7 +222,6 @@ private fun ReminderCard(
     reminder: Reminder,
     nowMillis: Long,
     focusKey: Any?,
-    onFocusRequested: () -> Unit,
     onEdit: () -> Unit,
     onToggle: (Boolean) -> Unit,
     onDelete: () -> Unit
@@ -238,8 +233,7 @@ private fun ReminderCard(
             .fillMaxWidth()
             .semantics { contentDescription = description }
             .requestFocusOnEntry(
-                focusKey = focusKey,
-                onFocusRequested = onFocusRequested
+                focusKey = focusKey
             )
             .clickable(onClick = onEdit)
     ) {

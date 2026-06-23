@@ -222,7 +222,6 @@ fun TimeMasterApp(
         HomeScreen(
             reminders = reminders,
             focusTarget = homeFocusTarget,
-            onHomeFocusTargetConsumed = { homeFocusTarget = null },
             onOpenSettings = { showingSettings = true },
             onAddReminder = {
                 editingReminder = null

@@ -14,7 +14,6 @@ import com.timemaster.domain.ReminderRule
 import com.timemaster.ui.home.HomeFocusTarget
 import com.timemaster.ui.home.HomeScreen
 import java.time.DayOfWeek
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -94,13 +93,10 @@ class HomeScreenTest {
 
     @Test
     fun homeFocusTargetFocusesSettingsButton() {
-        var consumed = false
-
         composeRule.setContent {
             HomeScreen(
                 reminders = emptyList(),
                 focusTarget = HomeFocusTarget.SettingsButton,
-                onHomeFocusTargetConsumed = { consumed = true },
                 onOpenSettings = {},
                 onAddReminder = {},
                 onEditReminder = {},
@@ -110,18 +106,14 @@ class HomeScreenTest {
         }
 
         composeRule.onNodeWithContentDescription("\u8bbe\u7f6e").assertIsFocused()
-        assertTrue(consumed)
     }
 
     @Test
     fun homeFocusTargetFocusesAddReminderButton() {
-        var consumed = false
-
         composeRule.setContent {
             HomeScreen(
                 reminders = emptyList(),
                 focusTarget = HomeFocusTarget.AddReminderButton,
-                onHomeFocusTargetConsumed = { consumed = true },
                 onOpenSettings = {},
                 onAddReminder = {},
                 onEditReminder = {},
@@ -131,12 +123,10 @@ class HomeScreenTest {
         }
 
         composeRule.onNodeWithContentDescription("\u65b0\u5efa\u5468\u671f\u63d0\u9192").assertIsFocused()
-        assertTrue(consumed)
     }
 
     @Test
     fun homeFocusTargetFocusesMatchingReminderCard() {
-        var consumed = false
         val targetReminder = reminder(id = 2, title = "\u76ee\u6807\u63d0\u9192")
         val otherReminder = reminder(id = 1, title = "\u5176\u4ed6\u63d0\u9192")
 
@@ -144,7 +134,6 @@ class HomeScreenTest {
             HomeScreen(
                 reminders = listOf(otherReminder, targetReminder),
                 focusTarget = HomeFocusTarget.ReminderCard(targetReminder.id),
-                onHomeFocusTargetConsumed = { consumed = true },
                 onOpenSettings = {},
                 onAddReminder = {},
                 onEditReminder = {},
@@ -154,7 +143,6 @@ class HomeScreenTest {
         }
 
         composeRule.onNode(hasContentDescriptionParts("\u76ee\u6807\u63d0\u9192")).assertIsFocused()
-        assertTrue(consumed)
     }
 
     private fun reminder(id: Long, title: String): Reminder {

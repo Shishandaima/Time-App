@@ -4,6 +4,7 @@ import androidx.compose.foundation.focusable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -32,21 +33,22 @@ fun Modifier.pageEntryTitleFocus(enabled: Boolean = true): Modifier {
 
 @Composable
 fun Modifier.requestFocusOnEntry(
-    focusKey: Any?,
-    onFocusRequested: () -> Unit = {}
+    focusKey: Any?
 ): Modifier {
     val focusRequester = remember { FocusRequester() }
 
     if (focusKey != null) {
         LaunchedEffect(focusKey) {
+            withFrameNanos { }
             focusRequester.requestFocus()
-            onFocusRequested()
         }
     }
 
     return if (focusKey == null) {
         this
     } else {
-        this.focusRequester(focusRequester)
+        this
+            .focusRequester(focusRequester)
+            .focusable()
     }
 }
