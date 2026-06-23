@@ -11,15 +11,42 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 
 @Composable
-fun Modifier.pageEntryTitleFocus(): Modifier {
+fun Modifier.pageEntryTitleFocus(enabled: Boolean = true): Modifier {
     val focusRequester = remember { FocusRequester() }
 
-    LaunchedEffect(focusRequester) {
-        focusRequester.requestFocus()
+    if (enabled) {
+        LaunchedEffect(focusRequester) {
+            focusRequester.requestFocus()
+        }
     }
 
-    return this
-        .focusRequester(focusRequester)
-        .focusable()
-        .semantics { heading() }
+    val headingModifier = this.semantics { heading() }
+    return if (enabled) {
+        headingModifier
+            .focusRequester(focusRequester)
+            .focusable()
+    } else {
+        headingModifier
+    }
+}
+
+@Composable
+fun Modifier.requestFocusOnEntry(
+    focusKey: Any?,
+    onFocusRequested: () -> Unit = {}
+): Modifier {
+    val focusRequester = remember { FocusRequester() }
+
+    if (focusKey != null) {
+        LaunchedEffect(focusKey) {
+            focusRequester.requestFocus()
+            onFocusRequested()
+        }
+    }
+
+    return if (focusKey == null) {
+        this
+    } else {
+        this.focusRequester(focusRequester)
+    }
 }

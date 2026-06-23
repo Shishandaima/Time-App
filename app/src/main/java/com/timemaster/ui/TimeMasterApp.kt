@@ -40,6 +40,7 @@ import com.timemaster.permissions.canPostNotifications
 import com.timemaster.permissions.canScheduleExactAlarms
 import com.timemaster.permissions.openExactAlarmSettings
 import com.timemaster.ui.editor.ReminderEditorScreen
+import com.timemaster.ui.home.HomeFocusTarget
 import com.timemaster.ui.home.HomeScreen
 import com.timemaster.ui.settings.SettingsScreen
 import com.timemaster.ui.theme.ThemeMode
@@ -77,6 +78,7 @@ fun TimeMasterApp(
     var editingReminder by remember { mutableStateOf<Reminder?>(null) }
     var showingEditor by remember { mutableStateOf(false) }
     var showingSettings by remember { mutableStateOf(false) }
+    var homeFocusTarget by remember { mutableStateOf<HomeFocusTarget?>(null) }
     var updateDialog by remember { mutableStateOf<UpdateDialogState?>(null) }
     var downloadedUpdateApk by remember { mutableStateOf<File?>(null) }
     var permissionRefresh by remember { mutableStateOf(0) }
@@ -144,18 +146,32 @@ fun TimeMasterApp(
         }
     }
 
+    fun editorReturnFocusTarget(): HomeFocusTarget =
+        editingReminder?.let { HomeFocusTarget.ReminderCard(it.id) }
+            ?: HomeFocusTarget.AddReminderButton
+
+    fun returnHomeFromEditor() {
+        homeFocusTarget = editorReturnFocusTarget()
+        showingEditor = false
+        editingReminder = null
+    }
+
+    fun returnHomeFromSettings() {
+        homeFocusTarget = HomeFocusTarget.SettingsButton
+        showingSettings = false
+    }
+
     if (showingEditor) {
         BackHandler {
-            showingEditor = false
-            editingReminder = null
+            returnHomeFromEditor()
         }
         ReminderEditorScreen(
             initialReminder = editingReminder,
             onBack = {
-                showingEditor = false
-                editingReminder = null
+                returnHomeFromEditor()
             },
             onSave = { reminder ->
+                val returnFocusTarget = editorReturnFocusTarget()
                 scope.launch {
                     val savedId = repository.saveReminder(reminder)
                     val savedReminder = reminder.copy(id = savedId)
@@ -171,6 +187,7 @@ fun TimeMasterApp(
                     ) {
                         notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
+                    homeFocusTarget = returnFocusTarget
                     showingEditor = false
                     editingReminder = null
                 }
@@ -179,7 +196,7 @@ fun TimeMasterApp(
         )
     } else if (showingSettings) {
         BackHandler {
-            showingSettings = false
+            returnHomeFromSettings()
         }
         SettingsScreen(
             themeMode = themeMode,
@@ -199,11 +216,13 @@ fun TimeMasterApp(
                 }
             },
             onThemeModeChange = onThemeModeChange,
-            onBack = { showingSettings = false }
+            onBack = { returnHomeFromSettings() }
         )
     } else {
         HomeScreen(
             reminders = reminders,
+            focusTarget = homeFocusTarget,
+            onHomeFocusTargetConsumed = { homeFocusTarget = null },
             onOpenSettings = { showingSettings = true },
             onAddReminder = {
                 editingReminder = null
