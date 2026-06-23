@@ -35,6 +35,7 @@ import com.timemaster.data.ReminderRepository
 import com.timemaster.domain.AlertMode
 import com.timemaster.domain.Reminder
 import com.timemaster.domain.ReminderRule
+import com.timemaster.domain.needsScheduleRepair
 import com.timemaster.domain.nextTrigger
 import com.timemaster.permissions.canPostNotifications
 import com.timemaster.permissions.canScheduleExactAlarms
@@ -146,6 +147,22 @@ fun TimeMasterApp(
         }
     }
 
+    LaunchedEffect(reminders, permissionRefresh, canScheduleExact) {
+        if (!canScheduleExact) return@LaunchedEffect
+
+        val nowMillis = System.currentTimeMillis()
+        reminders
+            .filter { reminder -> needsScheduleRepair(reminder, nowMillis) }
+            .forEach { reminder ->
+                scheduleIfEnabled(
+                    reminder = reminder,
+                    repository = repository,
+                    alarmScheduler = alarmScheduler,
+                    onMissingExactAlarmPermission = {}
+                )
+            }
+    }
+
     fun editorReturnFocusTarget(): HomeFocusTarget =
         editingReminder?.let { HomeFocusTarget.ReminderCard(it.id) }
             ?: HomeFocusTarget.AddReminderButton
@@ -250,6 +267,7 @@ fun TimeMasterApp(
             },
             onDeleteReminder = { reminder ->
                 scope.launch {
+                    alarmScheduler.cancel(reminder.id)
                     repository.deleteReminder(reminder.id)
                 }
             },

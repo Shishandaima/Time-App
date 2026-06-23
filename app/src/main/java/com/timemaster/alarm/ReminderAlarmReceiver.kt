@@ -27,13 +27,6 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
                     return@launch
                 }
 
-                if (reminder.alertMode == AlertMode.Strong) {
-                    app.ringtonePlayer.playLooping(reminder.ringtoneId)
-                } else {
-                    app.ringtonePlayer.preview(reminder.ringtoneId)
-                }
-                app.reminderNotifier.showReminder(reminder)
-
                 val nextTriggerAtMillis = nextTrigger(LocalDateTime.now(), reminder.rule)
                     .atZone(ZoneId.systemDefault())
                     .toInstant()
@@ -43,6 +36,13 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
                 } else {
                     app.reminderRepository.updateNextTrigger(reminderId, null)
                 }
+
+                if (reminder.alertMode == AlertMode.Strong) {
+                    app.ringtonePlayer.playLooping(reminder.ringtoneId)
+                } else {
+                    app.ringtonePlayer.preview(reminder.ringtoneId)
+                }
+                app.reminderNotifier.showReminder(reminder)
             } finally {
                 pendingResult.finish()
             }

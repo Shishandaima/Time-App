@@ -1,9 +1,7 @@
 package com.timemaster.ui.home
 
 import com.timemaster.domain.Reminder
-import com.timemaster.domain.nextTrigger
 import java.time.Instant
-import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import kotlin.math.max
@@ -17,10 +15,7 @@ fun reminderCountdownText(
 
     val targetMillis = reminder.nextTriggerAtMillis
         ?.takeIf { it > nowMillis }
-        ?: nextTrigger(
-            now = LocalDateTime.ofInstant(Instant.ofEpochMilli(nowMillis), zoneId),
-            rule = reminder.rule
-        ).atZone(zoneId).toInstant().toEpochMilli()
+        ?: return "\u4e0b\u6b21\u63d0\u9192\uff1a\u6b63\u5728\u91cd\u65b0\u8c03\u5ea6"
 
     val totalSeconds = max(0L, ChronoUnit.SECONDS.between(
         Instant.ofEpochMilli(nowMillis),
