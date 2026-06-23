@@ -39,6 +39,7 @@ import com.timemaster.domain.AlertMode
 import com.timemaster.domain.Reminder
 import com.timemaster.domain.ReminderRule
 import com.timemaster.ui.accessibility.pageEntryTitleFocus
+import com.timemaster.ui.accessibility.requestFocusOnEntry
 import java.time.Instant
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -48,9 +49,16 @@ import java.time.temporal.ChronoUnit
 import kotlin.math.max
 import kotlinx.coroutines.delay
 
+sealed interface HomeFocusTarget {
+    data object SettingsButton : HomeFocusTarget
+    data object AddReminderButton : HomeFocusTarget
+    data class ReminderCard(val reminderId: Long) : HomeFocusTarget
+}
+
 @Composable
 fun HomeScreen(
     reminders: List<Reminder>,
+    focusTarget: HomeFocusTarget? = null,
     onOpenSettings: () -> Unit,
     onAddReminder: () -> Unit,
     onEditReminder: (Reminder) -> Unit,
@@ -60,6 +68,7 @@ fun HomeScreen(
 ) {
     var deleteCandidate by remember { mutableStateOf<Reminder?>(null) }
     var nowMillis by remember { mutableStateOf(System.currentTimeMillis()) }
+    val focusTitleOnEntry = remember { focusTarget == null }
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -89,7 +98,7 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 64.dp)
-                    .pageEntryTitleFocus()
+                    .pageEntryTitleFocus(enabled = focusTitleOnEntry)
             )
             IconButton(
                 onClick = onOpenSettings,
@@ -97,6 +106,9 @@ fun HomeScreen(
                     .align(Alignment.CenterStart)
                     .offset(x = (-20).dp)
                     .size(64.dp)
+                    .requestFocusOnEntry(
+                        focusKey = focusTarget.takeIf { it == HomeFocusTarget.SettingsButton }
+                    )
                     .semantics {
                         contentDescription = "\u8bbe\u7f6e"
                     }
@@ -113,6 +125,9 @@ fun HomeScreen(
                     .align(Alignment.CenterEnd)
                     .offset(x = 20.dp)
                     .size(64.dp)
+                    .requestFocusOnEntry(
+                        focusKey = focusTarget.takeIf { it == HomeFocusTarget.AddReminderButton }
+                    )
                     .semantics {
                         contentDescription = "\u65b0\u5efa\u5468\u671f\u63d0\u9192"
                     }
@@ -144,6 +159,11 @@ fun HomeScreen(
                     ReminderCard(
                         reminder = reminder,
                         nowMillis = nowMillis,
+                        focusKey = focusTarget
+                            .takeIf {
+                                it is HomeFocusTarget.ReminderCard &&
+                                    it.reminderId == reminder.id
+                            },
                         onEdit = { onEditReminder(reminder) },
                         onToggle = { enabled -> onToggleReminder(reminder, enabled) },
                         onDelete = { deleteCandidate = reminder }
@@ -201,6 +221,7 @@ private fun EmptyState(onAddReminder: () -> Unit) {
 private fun ReminderCard(
     reminder: Reminder,
     nowMillis: Long,
+    focusKey: Any?,
     onEdit: () -> Unit,
     onToggle: (Boolean) -> Unit,
     onDelete: () -> Unit
@@ -211,6 +232,9 @@ private fun ReminderCard(
         modifier = Modifier
             .fillMaxWidth()
             .semantics { contentDescription = description }
+            .requestFocusOnEntry(
+                focusKey = focusKey
+            )
             .clickable(onClick = onEdit)
     ) {
         Column(

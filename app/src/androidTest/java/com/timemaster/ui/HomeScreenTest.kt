@@ -2,6 +2,7 @@ package com.timemaster.ui
 
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -10,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithText
 import com.timemaster.domain.AlertMode
 import com.timemaster.domain.Reminder
 import com.timemaster.domain.ReminderRule
+import com.timemaster.ui.home.HomeFocusTarget
 import com.timemaster.ui.home.HomeScreen
 import java.time.DayOfWeek
 import org.junit.Rule
@@ -87,6 +89,78 @@ class HomeScreenTest {
                 "\u4e0b\u6b21\u63d0\u9192\uff1a1\u5c0f\u65f615\u5206"
             )
         ).assertExists()
+    }
+
+    @Test
+    fun homeFocusTargetFocusesSettingsButton() {
+        composeRule.setContent {
+            HomeScreen(
+                reminders = emptyList(),
+                focusTarget = HomeFocusTarget.SettingsButton,
+                onOpenSettings = {},
+                onAddReminder = {},
+                onEditReminder = {},
+                onToggleReminder = { _, _ -> },
+                onDeleteReminder = {}
+            )
+        }
+
+        composeRule.onNodeWithContentDescription("\u8bbe\u7f6e").assertIsFocused()
+    }
+
+    @Test
+    fun homeFocusTargetFocusesAddReminderButton() {
+        composeRule.setContent {
+            HomeScreen(
+                reminders = emptyList(),
+                focusTarget = HomeFocusTarget.AddReminderButton,
+                onOpenSettings = {},
+                onAddReminder = {},
+                onEditReminder = {},
+                onToggleReminder = { _, _ -> },
+                onDeleteReminder = {}
+            )
+        }
+
+        composeRule.onNodeWithContentDescription("\u65b0\u5efa\u5468\u671f\u63d0\u9192").assertIsFocused()
+    }
+
+    @Test
+    fun homeFocusTargetFocusesMatchingReminderCard() {
+        val targetReminder = reminder(id = 2, title = "\u76ee\u6807\u63d0\u9192")
+        val otherReminder = reminder(id = 1, title = "\u5176\u4ed6\u63d0\u9192")
+
+        composeRule.setContent {
+            HomeScreen(
+                reminders = listOf(otherReminder, targetReminder),
+                focusTarget = HomeFocusTarget.ReminderCard(targetReminder.id),
+                onOpenSettings = {},
+                onAddReminder = {},
+                onEditReminder = {},
+                onToggleReminder = { _, _ -> },
+                onDeleteReminder = {}
+            )
+        }
+
+        composeRule.onNode(hasContentDescriptionParts("\u76ee\u6807\u63d0\u9192")).assertIsFocused()
+    }
+
+    private fun reminder(id: Long, title: String): Reminder {
+        val now = System.currentTimeMillis()
+        return Reminder(
+            id = id,
+            title = title,
+            rule = ReminderRule(
+                intervalSeconds = 60 * 60,
+                startMinuteOfDay = 9 * 60,
+                endMinuteOfDay = 21 * 60,
+                enabledDays = DayOfWeek.entries.toSet()
+            ),
+            alertMode = AlertMode.Strong,
+            ringtoneId = "gentle_chime",
+            isEnabled = true,
+            nextTriggerAtMillis = now + 4_558_000L
+        )
     }
 
     private fun hasContentDescriptionParts(vararg parts: String) =
