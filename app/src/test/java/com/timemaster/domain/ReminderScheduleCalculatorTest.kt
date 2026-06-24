@@ -54,4 +54,59 @@ class ReminderScheduleCalculatorTest {
 
         assertEquals(LocalDateTime.of(2026, 6, 22, 8, 0), nextTrigger(now, weekdayRule))
     }
+
+    @Test
+    fun delayedDelivery_preservesOriginalCadence() {
+        val scheduledTrigger = LocalDateTime.of(2026, 6, 19, 10, 30)
+        val deliveredAt = LocalDateTime.of(2026, 6, 19, 10, 35)
+
+        assertEquals(
+            LocalDateTime.of(2026, 6, 19, 11, 0),
+            nextTriggerAfterScheduled(scheduledTrigger, deliveredAt, weekdayRule)
+        )
+    }
+
+    @Test
+    fun delayLongerThanOneInterval_skipsMissedSlotsWithoutDrifting() {
+        val scheduledTrigger = LocalDateTime.of(2026, 6, 19, 10, 30)
+        val deliveredAt = LocalDateTime.of(2026, 6, 19, 11, 5)
+
+        assertEquals(
+            LocalDateTime.of(2026, 6, 19, 11, 30),
+            nextTriggerAfterScheduled(scheduledTrigger, deliveredAt, weekdayRule)
+        )
+    }
+
+    @Test
+    fun delayedFinalDelivery_movesToNextEnabledDayStart() {
+        val scheduledTrigger = LocalDateTime.of(2026, 6, 19, 22, 0)
+        val deliveredAt = LocalDateTime.of(2026, 6, 19, 22, 5)
+
+        assertEquals(
+            LocalDateTime.of(2026, 6, 22, 8, 0),
+            nextTriggerAfterScheduled(scheduledTrigger, deliveredAt, weekdayRule)
+        )
+    }
+
+    @Test
+    fun staleScheduleRecovery_preservesCadenceWithinCurrentWindow() {
+        val scheduledTrigger = LocalDateTime.of(2026, 6, 19, 9, 30)
+        val recoveredAt = LocalDateTime.of(2026, 6, 19, 10, 35)
+
+        assertEquals(
+            LocalDateTime.of(2026, 6, 19, 11, 0),
+            nextTriggerAfterScheduled(scheduledTrigger, recoveredAt, weekdayRule)
+        )
+    }
+
+    @Test
+    fun longStaleSchedule_recoversFromCurrentDayInsteadOfLoopingFromOldDate() {
+        val scheduledTrigger = LocalDateTime.of(2026, 1, 2, 9, 30)
+        val recoveredAt = LocalDateTime.of(2026, 6, 19, 10, 35)
+
+        assertEquals(
+            LocalDateTime.of(2026, 6, 19, 11, 0),
+            nextTriggerAfterScheduled(scheduledTrigger, recoveredAt, weekdayRule)
+        )
+    }
 }

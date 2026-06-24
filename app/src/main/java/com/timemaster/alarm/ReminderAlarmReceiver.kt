@@ -5,10 +5,11 @@ import android.content.Context
 import android.content.Intent
 import com.timemaster.TimeMasterApplication
 import com.timemaster.domain.AlertMode
-import com.timemaster.domain.nextTrigger
+import com.timemaster.domain.nextTriggerAfterScheduled
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 
@@ -27,7 +28,16 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
                     return@launch
                 }
 
-                val nextTriggerAtMillis = nextTrigger(LocalDateTime.now(), reminder.rule)
+                val zoneId = ZoneId.systemDefault()
+                val deliveredAt = LocalDateTime.now()
+                val scheduledTrigger = reminder.nextTriggerAtMillis
+                    ?.let { Instant.ofEpochMilli(it).atZone(zoneId).toLocalDateTime() }
+                    ?: deliveredAt
+                val nextTriggerAtMillis = nextTriggerAfterScheduled(
+                    scheduledTrigger = scheduledTrigger,
+                    now = deliveredAt,
+                    rule = reminder.rule
+                )
                     .atZone(ZoneId.systemDefault())
                     .toInstant()
                     .toEpochMilli()
