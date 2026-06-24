@@ -5,7 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 internal val PageContentHorizontalPadding = 20.dp
-internal val PageContentTopPadding = 8.dp
+internal val PageContentTopPadding = 4.dp
 internal val PageContentBottomPadding = 20.dp
 
 fun Modifier.pageContentPadding(): Modifier = padding(

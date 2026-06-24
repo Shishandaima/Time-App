@@ -8,7 +8,7 @@ class PageLayoutTest {
     @Test
     fun pageContentInsetsKeepHorizontalAndBottomSpacingWhileRaisingTop() {
         assertEquals(20.dp, PageContentHorizontalPadding)
-        assertEquals(8.dp, PageContentTopPadding)
+        assertEquals(4.dp, PageContentTopPadding)
         assertEquals(20.dp, PageContentBottomPadding)
     }
 }
