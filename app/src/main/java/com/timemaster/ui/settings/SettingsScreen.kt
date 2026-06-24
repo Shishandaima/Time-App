@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.timemaster.ui.accessibility.pageEntryTitleFocus
+import com.timemaster.ui.layout.pageContentPadding
 import com.timemaster.ui.theme.ThemeMode
 
 @Composable
@@ -43,7 +44,7 @@ fun SettingsScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
             .statusBarsPadding()
-            .padding(20.dp),
+            .pageContentPadding(),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
         Box(

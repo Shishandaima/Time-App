@@ -69,6 +69,7 @@ import com.timemaster.domain.Reminder
 import com.timemaster.domain.ReminderRule
 import com.timemaster.sound.RingtoneCatalog
 import com.timemaster.ui.accessibility.pageEntryTitleFocus
+import com.timemaster.ui.layout.pageContentPadding
 import java.time.DayOfWeek
 import kotlin.math.abs
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -106,7 +107,7 @@ fun ReminderEditorScreen(
             .background(MaterialTheme.colorScheme.surface)
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
-            .padding(20.dp),
+            .pageContentPadding(),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
         Box(

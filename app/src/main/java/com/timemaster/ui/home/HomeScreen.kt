@@ -40,6 +40,7 @@ import com.timemaster.domain.Reminder
 import com.timemaster.domain.ReminderRule
 import com.timemaster.ui.accessibility.pageEntryTitleFocus
 import com.timemaster.ui.accessibility.requestFocusOnEntry
+import com.timemaster.ui.layout.pageContentPadding
 import java.time.Instant
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -82,7 +83,7 @@ fun HomeScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
             .statusBarsPadding()
-            .padding(20.dp),
+            .pageContentPadding(),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
         Box(
