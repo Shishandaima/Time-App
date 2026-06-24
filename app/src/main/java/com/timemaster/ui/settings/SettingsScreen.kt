@@ -2,6 +2,7 @@ package com.timemaster.ui.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,14 +15,22 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -31,6 +40,17 @@ import com.timemaster.ui.accessibility.pageEntryTitleFocus
 import com.timemaster.ui.layout.pageContentPadding
 import com.timemaster.ui.theme.ThemeMode
 
+internal data class GeneralSettingUiItem(
+    val label: String,
+    val value: String?
+)
+
+internal val GeneralSettingsUiItems = listOf(
+    GeneralSettingUiItem("\u5b57\u4f53\u5927\u5c0f", "\u6807\u51c6"),
+    GeneralSettingUiItem("\u54cd\u94c3\u65f6\u957f", "10\u79d2"),
+    GeneralSettingUiItem("\u9707\u52a8\u5f00\u5173", null)
+)
+
 @Composable
 fun SettingsScreen(
     themeMode: ThemeMode,
@@ -39,11 +59,14 @@ fun SettingsScreen(
     onThemeModeChange: (ThemeMode) -> Unit,
     onBack: () -> Unit
 ) {
+    var vibrationEnabled by remember { mutableStateOf(true) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
             .statusBarsPadding()
+            .verticalScroll(rememberScrollState())
             .pageContentPadding(),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
@@ -94,6 +117,19 @@ fun SettingsScreen(
             ThemeOptionRow("\u6d45\u8272", ThemeMode.Light, themeMode, onThemeModeChange)
             ThemeOptionRow("\u6df1\u8272", ThemeMode.Dark, themeMode, onThemeModeChange)
             ThemeOptionRow("\u8ddf\u968f\u7cfb\u7edf", ThemeMode.System, themeMode, onThemeModeChange)
+            SettingsValueRow(
+                label = GeneralSettingsUiItems[0].label,
+                value = GeneralSettingsUiItems[0].value
+            )
+            SettingsValueRow(
+                label = GeneralSettingsUiItems[1].label,
+                value = GeneralSettingsUiItems[1].value
+            )
+            SettingsSwitchRow(
+                label = GeneralSettingsUiItems[2].label,
+                checked = vibrationEnabled,
+                onCheckedChange = { vibrationEnabled = it }
+            )
         }
 
         SettingsSection(title = "\u5173\u4e8e") {
@@ -145,6 +181,32 @@ private fun ThemeOptionRow(
             text = label,
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(start = 8.dp)
+        )
+    }
+}
+
+@Composable
+private fun SettingsSwitchRow(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .toggleable(
+                value = checked,
+                role = Role.Switch,
+                onValueChange = onCheckedChange
+            )
+            .padding(vertical = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = label, style = MaterialTheme.typography.bodyLarge)
+        Switch(
+            checked = checked,
+            onCheckedChange = null
         )
     }
 }
