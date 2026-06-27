@@ -17,12 +17,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.timemaster.ui.accessibility.pageEntryTitleFocus
 import com.timemaster.ui.layout.pageContentPadding
+import com.timemaster.ui.theme.FontSizeMode
 import com.timemaster.ui.theme.ThemeMode
 
 internal data class GeneralSettingUiItem(
@@ -45,8 +48,8 @@ internal data class GeneralSettingUiItem(
     val value: String?
 )
 
-internal val GeneralSettingsUiItems = listOf(
-    GeneralSettingUiItem("\u5b57\u4f53\u5927\u5c0f", "\u6807\u51c6"),
+internal fun generalSettingsUiItems(fontSizeMode: FontSizeMode) = listOf(
+    GeneralSettingUiItem("\u5b57\u4f53\u5927\u5c0f", fontSizeMode.label),
     GeneralSettingUiItem("\u54cd\u94c3\u65f6\u957f", "10\u79d2"),
     GeneralSettingUiItem("\u9707\u52a8\u5f00\u5173", null)
 )
@@ -54,12 +57,16 @@ internal val GeneralSettingsUiItems = listOf(
 @Composable
 fun SettingsScreen(
     themeMode: ThemeMode,
+    fontSizeMode: FontSizeMode,
     appVersion: String,
     onCheckUpdate: () -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit,
+    onFontSizeModeChange: (FontSizeMode) -> Unit,
     onBack: () -> Unit
 ) {
     var vibrationEnabled by remember { mutableStateOf(true) }
+    var showFontSizeDialog by remember { mutableStateOf(false) }
+    val generalItems = generalSettingsUiItems(fontSizeMode)
 
     Column(
         modifier = Modifier
@@ -118,15 +125,16 @@ fun SettingsScreen(
             ThemeOptionRow("\u6df1\u8272", ThemeMode.Dark, themeMode, onThemeModeChange)
             ThemeOptionRow("\u8ddf\u968f\u7cfb\u7edf", ThemeMode.System, themeMode, onThemeModeChange)
             SettingsValueRow(
-                label = GeneralSettingsUiItems[0].label,
-                value = GeneralSettingsUiItems[0].value
+                label = generalItems[0].label,
+                value = generalItems[0].value,
+                onClick = { showFontSizeDialog = true }
             )
             SettingsValueRow(
-                label = GeneralSettingsUiItems[1].label,
-                value = GeneralSettingsUiItems[1].value
+                label = generalItems[1].label,
+                value = generalItems[1].value
             )
             SettingsSwitchRow(
-                label = GeneralSettingsUiItems[2].label,
+                label = generalItems[2].label,
                 checked = vibrationEnabled,
                 onCheckedChange = { vibrationEnabled = it }
             )
@@ -139,6 +147,17 @@ fun SettingsScreen(
             )
             SettingsValueRow(label = "APP\u7248\u672c\u53f7", value = appVersion)
         }
+    }
+
+    if (showFontSizeDialog) {
+        FontSizeDialog(
+            selectedMode = fontSizeMode,
+            onSelect = { mode ->
+                onFontSizeModeChange(mode)
+                showFontSizeDialog = false
+            },
+            onDismiss = { showFontSizeDialog = false }
+        )
     }
 }
 
@@ -230,13 +249,83 @@ private fun SettingsValueRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = label, style = MaterialTheme.typography.bodyLarge)
+        val textClickModifier = if (onClick == null) {
+            Modifier
+        } else {
+            Modifier.clickable(onClick = onClick)
+        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = textClickModifier
+        )
         if (value != null) {
             Text(
                 text = value,
                 style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.End
+                textAlign = TextAlign.End,
+                modifier = textClickModifier
             )
         }
+    }
+}
+
+@Composable
+private fun FontSizeDialog(
+    selectedMode: FontSizeMode,
+    onSelect: (FontSizeMode) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "\u9009\u62e9\u5b57\u4f53\u5927\u5c0f",
+                style = MaterialTheme.typography.titleLarge
+            )
+        },
+        text = {
+            Column {
+                FontSizeMode.entries.forEach { mode ->
+                    FontSizeOptionRow(
+                        mode = mode,
+                        selectedMode = selectedMode,
+                        onSelect = onSelect
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("\u53d6\u6d88")
+            }
+        }
+    )
+}
+
+@Composable
+private fun FontSizeOptionRow(
+    mode: FontSizeMode,
+    selectedMode: FontSizeMode,
+    onSelect: (FontSizeMode) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onSelect(mode) }
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(
+            selected = selectedMode == mode,
+            onClick = { onSelect(mode) }
+        )
+        Text(
+            text = mode.label,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier
+                .padding(start = 8.dp)
+                .clickable { onSelect(mode) }
+        )
     }
 }

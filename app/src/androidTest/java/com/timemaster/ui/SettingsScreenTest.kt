@@ -12,6 +12,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.timemaster.ui.settings.SettingsScreen
+import com.timemaster.ui.theme.FontSizeMode
 import com.timemaster.ui.theme.ThemeMode
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -26,9 +27,11 @@ class SettingsScreenTest {
         composeRule.setContent {
             SettingsScreen(
                 themeMode = ThemeMode.System,
+                fontSizeMode = FontSizeMode.Standard,
                 appVersion = "0.4.5",
                 onCheckUpdate = {},
                 onThemeModeChange = {},
+                onFontSizeModeChange = {},
                 onBack = {}
             )
         }
@@ -57,9 +60,11 @@ class SettingsScreenTest {
         composeRule.setContent {
             SettingsScreen(
                 themeMode = ThemeMode.System,
+                fontSizeMode = FontSizeMode.Standard,
                 appVersion = "0.4.5",
                 onCheckUpdate = {},
                 onThemeModeChange = {},
+                onFontSizeModeChange = {},
                 onBack = {}
             )
         }
@@ -84,6 +89,32 @@ class SettingsScreenTest {
         assertTrue(ringDurationTop < vibrationTop)
 
         composeRule.onNode(isToggleable()).assertIsOn().performClick().assertIsOff()
+    }
+
+    @Test
+    fun fontSizeRowShowsOptionsAndReportsSelection() {
+        var selectedMode = FontSizeMode.Standard
+        composeRule.setContent {
+            SettingsScreen(
+                themeMode = ThemeMode.System,
+                fontSizeMode = selectedMode,
+                appVersion = "0.4.5",
+                onCheckUpdate = {},
+                onThemeModeChange = {},
+                onFontSizeModeChange = { selectedMode = it },
+                onBack = {}
+            )
+        }
+
+        composeRule.onNodeWithText("\u5b57\u4f53\u5927\u5c0f").performClick()
+
+        composeRule.onNodeWithText("\u9009\u62e9\u5b57\u4f53\u5927\u5c0f").assertExists()
+        composeRule.onNodeWithText("\u6807\u51c6").assertExists()
+        composeRule.onNodeWithText("\u5927").assertExists()
+        composeRule.onNodeWithText("\u7279\u5927").assertExists().performClick()
+        composeRule.waitForIdle()
+
+        assertTrue(selectedMode == FontSizeMode.ExtraLarge)
     }
 
     private fun hasHeading() =

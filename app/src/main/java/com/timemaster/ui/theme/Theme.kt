@@ -10,12 +10,22 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.sp
 
 enum class ThemeMode {
     Light,
     Dark,
     System
+}
+
+enum class FontSizeMode(
+    val label: String,
+    internal val scale: Float
+) {
+    Standard("\u6807\u51c6", 0.8f),
+    Large("\u5927", 0.9f),
+    ExtraLarge("\u7279\u5927", 1.0f)
 }
 
 private val LightColors = lightColorScheme(
@@ -42,6 +52,7 @@ private val DarkColors = darkColorScheme(
 
 private const val SETTINGS_PREFS = "app_settings"
 private const val THEME_MODE_KEY = "theme_mode"
+private const val FONT_SIZE_MODE_KEY = "font_size_mode"
 
 fun readThemeMode(context: Context): ThemeMode =
     runCatching {
@@ -58,7 +69,33 @@ fun saveThemeMode(context: Context, themeMode: ThemeMode) {
         .apply()
 }
 
-private val TimeMasterTypography = Typography(
+fun readFontSizeMode(context: Context): FontSizeMode {
+    val prefs = context.getSharedPreferences(SETTINGS_PREFS, Context.MODE_PRIVATE)
+    val savedValue = prefs.getString(FONT_SIZE_MODE_KEY, null)
+    if (savedValue != null) {
+        return runCatching { FontSizeMode.valueOf(savedValue) }.getOrDefault(FontSizeMode.Standard)
+    }
+
+    return defaultFontSizeModeForFirstRead(isExistingInstall = isExistingInstall(context))
+}
+
+fun saveFontSizeMode(context: Context, fontSizeMode: FontSizeMode) {
+    context.getSharedPreferences(SETTINGS_PREFS, Context.MODE_PRIVATE)
+        .edit()
+        .putString(FONT_SIZE_MODE_KEY, fontSizeMode.name)
+        .apply()
+}
+
+internal fun defaultFontSizeModeForFirstRead(isExistingInstall: Boolean): FontSizeMode =
+    if (isExistingInstall) FontSizeMode.ExtraLarge else FontSizeMode.Standard
+
+private fun isExistingInstall(context: Context): Boolean =
+    runCatching {
+        val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+        packageInfo.firstInstallTime + 1_000L < packageInfo.lastUpdateTime
+    }.getOrDefault(false)
+
+private val ExtraLargeTypography = Typography(
     displaySmall = TextStyle(fontSize = 36.sp, lineHeight = 44.sp),
     headlineLarge = TextStyle(fontSize = 32.sp, lineHeight = 40.sp),
     headlineMedium = TextStyle(fontSize = 28.sp, lineHeight = 36.sp),
@@ -68,9 +105,37 @@ private val TimeMasterTypography = Typography(
     labelLarge = TextStyle(fontSize = 22.sp, lineHeight = 28.sp)
 )
 
+internal fun timeMasterTypography(fontSizeMode: FontSizeMode): Typography =
+    ExtraLargeTypography.scaleFontSizes(fontSizeMode.scale)
+
+private fun Typography.scaleFontSizes(scale: Float): Typography =
+    Typography(
+        displaySmall = displaySmall.scaledFontSize(scale),
+        headlineLarge = headlineLarge.scaledFontSize(scale),
+        headlineMedium = headlineMedium.scaledFontSize(scale),
+        headlineSmall = headlineSmall.scaledFontSize(scale),
+        titleLarge = titleLarge.scaledFontSize(scale),
+        titleMedium = titleMedium.scaledFontSize(scale),
+        titleSmall = titleSmall.scaledFontSize(scale),
+        bodyLarge = bodyLarge.scaledFontSize(scale),
+        bodyMedium = bodyMedium.scaledFontSize(scale),
+        bodySmall = bodySmall.scaledFontSize(scale),
+        labelLarge = labelLarge.scaledFontSize(scale),
+        labelMedium = labelMedium.scaledFontSize(scale),
+        labelSmall = labelSmall.scaledFontSize(scale)
+    )
+
+private fun TextStyle.scaledFontSize(scale: Float): TextStyle =
+    if (fontSize.isSpecified) {
+        copy(fontSize = (fontSize.value * scale).sp)
+    } else {
+        this
+    }
+
 @Composable
 fun TimeMasterTheme(
     themeMode: ThemeMode = ThemeMode.System,
+    fontSizeMode: FontSizeMode = FontSizeMode.Standard,
     content: @Composable () -> Unit
 ) {
     val useDarkTheme = when (themeMode) {
@@ -80,7 +145,7 @@ fun TimeMasterTheme(
     }
     MaterialTheme(
         colorScheme = if (useDarkTheme) DarkColors else LightColors,
-        typography = TimeMasterTypography
+        typography = timeMasterTypography(fontSizeMode)
     ) {
         Surface(
             color = MaterialTheme.colorScheme.surface,
