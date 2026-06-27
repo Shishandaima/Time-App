@@ -55,7 +55,8 @@ internal fun generalSettingsUiItems(
 ) = listOf(
     GeneralSettingUiItem("\u5b57\u4f53\u5927\u5c0f", fontSizeMode.label),
     GeneralSettingUiItem("\u54cd\u94c3\u65f6\u957f", ringDurationMode.label),
-    GeneralSettingUiItem("\u9707\u52a8", null)
+    GeneralSettingUiItem("\u9707\u52a8", null),
+    GeneralSettingUiItem("\u9759\u97f3", null)
 )
 
 @Composable
@@ -64,12 +65,14 @@ fun SettingsScreen(
     fontSizeMode: FontSizeMode,
     ringDurationMode: RingDurationMode,
     vibrationEnabled: Boolean,
+    silentModeEnabled: Boolean,
     appVersion: String,
     onCheckUpdate: () -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit,
     onFontSizeModeChange: (FontSizeMode) -> Unit,
     onRingDurationModeChange: (RingDurationMode) -> Unit,
     onVibrationEnabledChange: (Boolean) -> Unit,
+    onSilentModeEnabledChange: (Boolean) -> Unit,
     onBack: () -> Unit
 ) {
     var showFontSizeDialog by remember { mutableStateOf(false) }
@@ -149,6 +152,11 @@ fun SettingsScreen(
                 label = generalItems[2].label,
                 checked = vibrationEnabled,
                 onCheckedChange = onVibrationEnabledChange
+            )
+            SettingsSwitchRow(
+                label = generalItems[3].label,
+                checked = silentModeEnabled,
+                onCheckedChange = onSilentModeEnabledChange
             )
         }
 

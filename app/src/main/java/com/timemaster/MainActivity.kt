@@ -8,8 +8,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import com.timemaster.sound.readRingDurationMode
+import com.timemaster.sound.readSilentModeEnabled
 import com.timemaster.sound.readVibrationEnabled
 import com.timemaster.sound.saveRingDurationMode
+import com.timemaster.sound.saveSilentModeEnabled
 import com.timemaster.sound.saveVibrationEnabled
 import com.timemaster.ui.TimeMasterApp
 import com.timemaster.ui.theme.readFontSizeMode
@@ -37,6 +39,9 @@ class MainActivity : ComponentActivity() {
             var vibrationEnabled by rememberSaveable {
                 mutableStateOf(readVibrationEnabled(this))
             }
+            var silentModeEnabled by rememberSaveable {
+                mutableStateOf(readSilentModeEnabled(this))
+            }
             TimeMasterTheme(
                 themeMode = themeMode,
                 fontSizeMode = fontSizeMode
@@ -49,6 +54,7 @@ class MainActivity : ComponentActivity() {
                     fontSizeMode = fontSizeMode,
                     ringDurationMode = ringDurationMode,
                     vibrationEnabled = vibrationEnabled,
+                    silentModeEnabled = silentModeEnabled,
                     onThemeModeChange = { nextMode ->
                         themeMode = nextMode
                         saveThemeMode(this, nextMode)
@@ -64,6 +70,10 @@ class MainActivity : ComponentActivity() {
                     onVibrationEnabledChange = { enabled ->
                         vibrationEnabled = enabled
                         saveVibrationEnabled(this, enabled)
+                    },
+                    onSilentModeEnabledChange = { enabled ->
+                        silentModeEnabled = enabled
+                        saveSilentModeEnabled(this, enabled)
                     },
                     appVersion = BuildConfig.VERSION_NAME
                 )

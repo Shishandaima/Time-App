@@ -34,7 +34,10 @@ class RingtonePlayer(
         start(
             ringtoneId = ringtoneId,
             loop = true,
-            playSound = shouldPlayStrongAlertSound(),
+            playSound = shouldPlayAlertSound(
+                audibleAllowed = shouldPlayStrongAlertSound(),
+                silentModeEnabled = readSilentModeEnabled(appContext)
+            ),
             vibrationEnabled = readVibrationEnabled(appContext),
             autoStopMillis = readRingDurationMode(appContext).durationMillis
         )

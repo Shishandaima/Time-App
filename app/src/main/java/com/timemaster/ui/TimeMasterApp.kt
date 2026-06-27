@@ -69,10 +69,12 @@ fun TimeMasterApp(
     fontSizeMode: FontSizeMode = FontSizeMode.Standard,
     ringDurationMode: RingDurationMode = RingDurationMode.TenSeconds,
     vibrationEnabled: Boolean = true,
+    silentModeEnabled: Boolean = false,
     onThemeModeChange: (ThemeMode) -> Unit = {},
     onFontSizeModeChange: (FontSizeMode) -> Unit = {},
     onRingDurationModeChange: (RingDurationMode) -> Unit = {},
     onVibrationEnabledChange: (Boolean) -> Unit = {},
+    onSilentModeEnabledChange: (Boolean) -> Unit = {},
     appVersion: String = ""
 ) {
     val context = LocalContext.current
@@ -211,6 +213,7 @@ fun TimeMasterApp(
             fontSizeMode = fontSizeMode,
             ringDurationMode = ringDurationMode,
             vibrationEnabled = vibrationEnabled,
+            silentModeEnabled = silentModeEnabled,
             appVersion = appVersion,
             onCheckUpdate = {
                 updateDialog = UpdateDialogState.Checking
@@ -230,6 +233,7 @@ fun TimeMasterApp(
             onFontSizeModeChange = onFontSizeModeChange,
             onRingDurationModeChange = onRingDurationModeChange,
             onVibrationEnabledChange = onVibrationEnabledChange,
+            onSilentModeEnabledChange = onSilentModeEnabledChange,
             onBack = { returnHomeFromSettings() }
         )
     } else {
