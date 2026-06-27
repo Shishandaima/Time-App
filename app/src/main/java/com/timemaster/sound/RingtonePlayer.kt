@@ -26,8 +26,12 @@ class RingtonePlayer(
         appContext.getSystemService(Vibrator::class.java)
     }
     private var player: MediaPlayer? = null
+    private var ringing = false
     private val autoStopHandler = Handler(Looper.getMainLooper())
     private val autoStopRunnable = Runnable { stop() }
+    private val volumeButtonInterrupter: VolumeButtonRingingInterrupter by lazy {
+        VolumeButtonRingingInterrupter(appContext) { stop() }
+    }
 
     @Synchronized
     fun playLooping(ringtoneId: String) {
@@ -49,8 +53,13 @@ class RingtonePlayer(
     }
 
     @Synchronized
+    fun isRinging(): Boolean = ringing
+
+    @Synchronized
     fun stop() {
         autoStopHandler.removeCallbacks(autoStopRunnable)
+        volumeButtonInterrupter.stop()
+        ringing = false
         player?.release()
         player = null
         vibrator?.cancel()
@@ -64,8 +73,10 @@ class RingtonePlayer(
         autoStopMillis: Long = DEFAULT_AUTO_STOP_MILLIS
     ) {
         stop()
+        val shouldVibrate = shouldStartVibration(loop, vibrationEnabled)
         if (!playSound) {
-            if (shouldStartVibration(loop, vibrationEnabled)) {
+            if (shouldVibrate) {
+                beginInterruptibleRinging()
                 startVibration()
                 autoStopHandler.postDelayed(autoStopRunnable, autoStopMillis)
             }
@@ -85,13 +96,21 @@ class RingtonePlayer(
             }
         }
         player = nextPlayer
+        if (loop) {
+            beginInterruptibleRinging()
+        }
         nextPlayer.start()
-        if (shouldStartVibration(loop, vibrationEnabled)) {
+        if (shouldVibrate) {
             startVibration()
         }
         if (loop) {
             autoStopHandler.postDelayed(autoStopRunnable, autoStopMillis)
         }
+    }
+
+    private fun beginInterruptibleRinging() {
+        ringing = true
+        volumeButtonInterrupter.start()
     }
 
     private fun shouldPlayStrongAlertSound(): Boolean =

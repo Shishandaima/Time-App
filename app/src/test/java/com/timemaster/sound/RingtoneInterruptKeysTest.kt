@@ -17,4 +17,10 @@ class RingtoneInterruptKeysTest {
         assertFalse(isRingtoneInterruptKey(KeyEvent.KEYCODE_BACK))
         assertFalse(isRingtoneInterruptKey(KeyEvent.KEYCODE_VOLUME_MUTE))
     }
+
+    @Test
+    fun volumeKeysAreHandledOnlyWhileRinging() {
+        assertTrue(shouldHandleRingtoneInterruptKey(KeyEvent.KEYCODE_VOLUME_UP, isRinging = true))
+        assertFalse(shouldHandleRingtoneInterruptKey(KeyEvent.KEYCODE_VOLUME_UP, isRinging = false))
+    }
 }
