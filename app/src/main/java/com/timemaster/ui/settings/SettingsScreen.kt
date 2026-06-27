@@ -38,6 +38,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.timemaster.sound.RingDurationMode
 import com.timemaster.ui.accessibility.pageEntryTitleFocus
 import com.timemaster.ui.layout.pageContentPadding
 import com.timemaster.ui.theme.FontSizeMode
@@ -48,9 +49,12 @@ internal data class GeneralSettingUiItem(
     val value: String?
 )
 
-internal fun generalSettingsUiItems(fontSizeMode: FontSizeMode) = listOf(
+internal fun generalSettingsUiItems(
+    fontSizeMode: FontSizeMode,
+    ringDurationMode: RingDurationMode
+) = listOf(
     GeneralSettingUiItem("\u5b57\u4f53\u5927\u5c0f", fontSizeMode.label),
-    GeneralSettingUiItem("\u54cd\u94c3\u65f6\u957f", "10\u79d2"),
+    GeneralSettingUiItem("\u54cd\u94c3\u65f6\u957f", ringDurationMode.label),
     GeneralSettingUiItem("\u9707\u52a8\u5f00\u5173", null)
 )
 
@@ -58,15 +62,21 @@ internal fun generalSettingsUiItems(fontSizeMode: FontSizeMode) = listOf(
 fun SettingsScreen(
     themeMode: ThemeMode,
     fontSizeMode: FontSizeMode,
+    ringDurationMode: RingDurationMode,
     appVersion: String,
     onCheckUpdate: () -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit,
     onFontSizeModeChange: (FontSizeMode) -> Unit,
+    onRingDurationModeChange: (RingDurationMode) -> Unit,
     onBack: () -> Unit
 ) {
     var vibrationEnabled by remember { mutableStateOf(true) }
     var showFontSizeDialog by remember { mutableStateOf(false) }
-    val generalItems = generalSettingsUiItems(fontSizeMode)
+    var showRingDurationDialog by remember { mutableStateOf(false) }
+    val generalItems = generalSettingsUiItems(
+        fontSizeMode = fontSizeMode,
+        ringDurationMode = ringDurationMode
+    )
 
     Column(
         modifier = Modifier
@@ -131,7 +141,8 @@ fun SettingsScreen(
             )
             SettingsValueRow(
                 label = generalItems[1].label,
-                value = generalItems[1].value
+                value = generalItems[1].value,
+                onClick = { showRingDurationDialog = true }
             )
             SettingsSwitchRow(
                 label = generalItems[2].label,
@@ -157,6 +168,17 @@ fun SettingsScreen(
                 showFontSizeDialog = false
             },
             onDismiss = { showFontSizeDialog = false }
+        )
+    }
+
+    if (showRingDurationDialog) {
+        RingDurationDialog(
+            selectedMode = ringDurationMode,
+            onSelect = { mode ->
+                onRingDurationModeChange(mode)
+                showRingDurationDialog = false
+            },
+            onDismiss = { showRingDurationDialog = false }
         )
     }
 }
@@ -308,6 +330,66 @@ private fun FontSizeOptionRow(
     mode: FontSizeMode,
     selectedMode: FontSizeMode,
     onSelect: (FontSizeMode) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onSelect(mode) }
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(
+            selected = selectedMode == mode,
+            onClick = { onSelect(mode) }
+        )
+        Text(
+            text = mode.label,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier
+                .padding(start = 8.dp)
+                .clickable { onSelect(mode) }
+        )
+    }
+}
+
+@Composable
+private fun RingDurationDialog(
+    selectedMode: RingDurationMode,
+    onSelect: (RingDurationMode) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "\u9009\u62e9\u54cd\u94c3\u65f6\u957f",
+                style = MaterialTheme.typography.titleLarge
+            )
+        },
+        text = {
+            Column {
+                RingDurationMode.entries.forEach { mode ->
+                    RingDurationOptionRow(
+                        mode = mode,
+                        selectedMode = selectedMode,
+                        onSelect = onSelect
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("\u53d6\u6d88")
+            }
+        }
+    )
+}
+
+@Composable
+private fun RingDurationOptionRow(
+    mode: RingDurationMode,
+    selectedMode: RingDurationMode,
+    onSelect: (RingDurationMode) -> Unit
 ) {
     Row(
         modifier = Modifier

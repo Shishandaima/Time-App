@@ -31,7 +31,12 @@ class RingtonePlayer(
 
     @Synchronized
     fun playLooping(ringtoneId: String) {
-        start(ringtoneId = ringtoneId, loop = true, playSound = shouldPlayStrongAlertSound())
+        start(
+            ringtoneId = ringtoneId,
+            loop = true,
+            playSound = shouldPlayStrongAlertSound(),
+            autoStopMillis = readRingDurationMode(appContext).durationMillis
+        )
     }
 
     @Synchronized
@@ -47,12 +52,17 @@ class RingtonePlayer(
         vibrator?.cancel()
     }
 
-    private fun start(ringtoneId: String, loop: Boolean, playSound: Boolean) {
+    private fun start(
+        ringtoneId: String,
+        loop: Boolean,
+        playSound: Boolean,
+        autoStopMillis: Long = DEFAULT_AUTO_STOP_MILLIS
+    ) {
         stop()
         if (!playSound) {
             if (loop) {
                 startVibration()
-                autoStopHandler.postDelayed(autoStopRunnable, AUTO_STOP_MILLIS)
+                autoStopHandler.postDelayed(autoStopRunnable, autoStopMillis)
             }
             return
         }
@@ -73,7 +83,7 @@ class RingtonePlayer(
         nextPlayer.start()
         if (loop) {
             startVibration()
-            autoStopHandler.postDelayed(autoStopRunnable, AUTO_STOP_MILLIS)
+            autoStopHandler.postDelayed(autoStopRunnable, autoStopMillis)
         }
     }
 
@@ -102,6 +112,6 @@ class RingtonePlayer(
     }
 
     private companion object {
-        const val AUTO_STOP_MILLIS = 10_000L
+        const val DEFAULT_AUTO_STOP_MILLIS = 10_000L
     }
 }

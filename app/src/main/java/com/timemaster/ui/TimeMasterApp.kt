@@ -36,6 +36,7 @@ import com.timemaster.domain.AlertMode
 import com.timemaster.domain.Reminder
 import com.timemaster.domain.ReminderRule
 import com.timemaster.domain.nextTrigger
+import com.timemaster.sound.RingDurationMode
 import com.timemaster.permissions.canPostNotifications
 import com.timemaster.permissions.canScheduleExactAlarms
 import com.timemaster.permissions.openExactAlarmSettings
@@ -66,8 +67,10 @@ fun TimeMasterApp(
     onPreviewRingtone: (String) -> Unit = {},
     themeMode: ThemeMode = ThemeMode.System,
     fontSizeMode: FontSizeMode = FontSizeMode.Standard,
+    ringDurationMode: RingDurationMode = RingDurationMode.TenSeconds,
     onThemeModeChange: (ThemeMode) -> Unit = {},
     onFontSizeModeChange: (FontSizeMode) -> Unit = {},
+    onRingDurationModeChange: (RingDurationMode) -> Unit = {},
     appVersion: String = ""
 ) {
     val context = LocalContext.current
@@ -204,6 +207,7 @@ fun TimeMasterApp(
         SettingsScreen(
             themeMode = themeMode,
             fontSizeMode = fontSizeMode,
+            ringDurationMode = ringDurationMode,
             appVersion = appVersion,
             onCheckUpdate = {
                 updateDialog = UpdateDialogState.Checking
@@ -221,6 +225,7 @@ fun TimeMasterApp(
             },
             onThemeModeChange = onThemeModeChange,
             onFontSizeModeChange = onFontSizeModeChange,
+            onRingDurationModeChange = onRingDurationModeChange,
             onBack = { returnHomeFromSettings() }
         )
     } else {

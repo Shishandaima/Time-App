@@ -11,6 +11,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.timemaster.sound.RingDurationMode
 import com.timemaster.ui.settings.SettingsScreen
 import com.timemaster.ui.theme.FontSizeMode
 import com.timemaster.ui.theme.ThemeMode
@@ -28,10 +29,12 @@ class SettingsScreenTest {
             SettingsScreen(
                 themeMode = ThemeMode.System,
                 fontSizeMode = FontSizeMode.Standard,
+                ringDurationMode = RingDurationMode.TenSeconds,
                 appVersion = "0.4.5",
                 onCheckUpdate = {},
                 onThemeModeChange = {},
                 onFontSizeModeChange = {},
+                onRingDurationModeChange = {},
                 onBack = {}
             )
         }
@@ -61,10 +64,12 @@ class SettingsScreenTest {
             SettingsScreen(
                 themeMode = ThemeMode.System,
                 fontSizeMode = FontSizeMode.Standard,
+                ringDurationMode = RingDurationMode.TenSeconds,
                 appVersion = "0.4.5",
                 onCheckUpdate = {},
                 onThemeModeChange = {},
                 onFontSizeModeChange = {},
+                onRingDurationModeChange = {},
                 onBack = {}
             )
         }
@@ -98,10 +103,12 @@ class SettingsScreenTest {
             SettingsScreen(
                 themeMode = ThemeMode.System,
                 fontSizeMode = selectedMode,
+                ringDurationMode = RingDurationMode.TenSeconds,
                 appVersion = "0.4.5",
                 onCheckUpdate = {},
                 onThemeModeChange = {},
                 onFontSizeModeChange = { selectedMode = it },
+                onRingDurationModeChange = {},
                 onBack = {}
             )
         }
@@ -115,6 +122,32 @@ class SettingsScreenTest {
         composeRule.waitForIdle()
 
         assertTrue(selectedMode == FontSizeMode.ExtraLarge)
+    }
+
+    @Test
+    fun ringDurationRowShowsOptionsAndReportsSelection() {
+        var selectedMode = RingDurationMode.TenSeconds
+        composeRule.setContent {
+            SettingsScreen(
+                themeMode = ThemeMode.System,
+                fontSizeMode = FontSizeMode.Standard,
+                ringDurationMode = selectedMode,
+                appVersion = "0.4.5",
+                onCheckUpdate = {},
+                onThemeModeChange = {},
+                onFontSizeModeChange = {},
+                onRingDurationModeChange = { selectedMode = it },
+                onBack = {}
+            )
+        }
+
+        composeRule.onNodeWithText("\u54cd\u94c3\u65f6\u957f").performClick()
+
+        composeRule.onNodeWithText("\u9009\u62e9\u54cd\u94c3\u65f6\u957f").assertExists()
+        composeRule.onNodeWithText("5\u79d2").assertExists().performClick()
+        composeRule.waitForIdle()
+
+        assertTrue(selectedMode == RingDurationMode.FiveSeconds)
     }
 
     private fun hasHeading() =
