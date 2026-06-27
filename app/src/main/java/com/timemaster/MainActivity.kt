@@ -77,7 +77,8 @@ class MainActivity : ComponentActivity() {
                         silentModeEnabled = enabled
                         saveSilentModeEnabled(this, enabled)
                     },
-                    appVersion = BuildConfig.VERSION_NAME
+                    appVersion = BuildConfig.VERSION_NAME,
+                    onDueReminder = app.reminderDueHandler::handleDueReminder
                 )
             }
         }

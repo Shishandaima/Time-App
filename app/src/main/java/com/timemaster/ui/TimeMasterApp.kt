@@ -35,7 +35,9 @@ import com.timemaster.data.ReminderRepository
 import com.timemaster.domain.AlertMode
 import com.timemaster.domain.Reminder
 import com.timemaster.domain.ReminderRule
+import com.timemaster.domain.needsScheduleRepair
 import com.timemaster.domain.nextTrigger
+import com.timemaster.domain.nextTriggerAfterScheduled
 import com.timemaster.sound.RingDurationMode
 import com.timemaster.permissions.canPostNotifications
 import com.timemaster.permissions.canScheduleExactAlarms
@@ -57,8 +59,10 @@ import com.timemaster.update.openInstallPermissionSettings
 import com.timemaster.update.updateApkDestination
 import java.io.File
 import java.time.DayOfWeek
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -76,7 +80,8 @@ fun TimeMasterApp(
     onRingDurationModeChange: (RingDurationMode) -> Unit = {},
     onVibrationEnabledChange: (Boolean) -> Unit = {},
     onSilentModeEnabledChange: (Boolean) -> Unit = {},
-    appVersion: String = ""
+    appVersion: String = "",
+    onDueReminder: suspend (Long) -> Unit = {}
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -154,6 +159,59 @@ fun TimeMasterApp(
             permissionPrefs.edit().putBoolean("initial_exact_alarm_requested", true).apply()
             requestExactAfterNotification = false
             openExactAlarmSettings(context)
+        }
+    }
+
+    LaunchedEffect(reminders, permissionRefresh, canScheduleExact) {
+        if (!canScheduleExact) return@LaunchedEffect
+
+        val nowMillis = System.currentTimeMillis()
+        reminders
+            .filter { reminder -> needsScheduleRepair(reminder, nowMillis) }
+            .forEach { reminder ->
+                if (reminder.nextTriggerAtMillis == null) {
+                    scheduleIfEnabled(
+                        reminder = reminder,
+                        repository = repository,
+                        alarmScheduler = alarmScheduler,
+                        onMissingExactAlarmPermission = {},
+                        preserveExistingCadence = true
+                    )
+                } else {
+                    onDueReminder(reminder.id)
+                }
+            }
+    }
+
+    LaunchedEffect(reminders) {
+        val handledDueIds = mutableSetOf<Long>()
+        while (true) {
+            val nowMillis = System.currentTimeMillis()
+            reminders
+                .filter { reminder ->
+                    reminder.isEnabled &&
+                        reminder.id !in handledDueIds &&
+                        reminder.nextTriggerAtMillis?.let { it <= nowMillis } == true
+                }
+                .forEach { reminder ->
+                    handledDueIds += reminder.id
+                    onDueReminder(reminder.id)
+                }
+
+            val nextDelayMillis = reminders
+                .asSequence()
+                .filter { it.isEnabled }
+                .mapNotNull { it.nextTriggerAtMillis }
+                .filter { it > nowMillis }
+                .minOrNull()
+                ?.let { nextTriggerAtMillis ->
+                    (nextTriggerAtMillis - nowMillis).coerceIn(
+                        MIN_FOREGROUND_DUE_CHECK_MILLIS,
+                        MAX_FOREGROUND_DUE_CHECK_MILLIS
+                    )
+                }
+                ?: MAX_FOREGROUND_DUE_CHECK_MILLIS
+            delay(nextDelayMillis)
         }
     }
 
@@ -269,6 +327,7 @@ fun TimeMasterApp(
             },
             onDeleteReminder = { reminder ->
                 scope.launch {
+                    alarmScheduler.cancel(reminder.id)
                     repository.deleteReminder(reminder.id)
                 }
             },
@@ -497,12 +556,22 @@ private suspend fun scheduleIfEnabled(
     reminder: Reminder,
     repository: ReminderRepository,
     alarmScheduler: AlarmScheduler,
-    onMissingExactAlarmPermission: () -> Unit
+    onMissingExactAlarmPermission: () -> Unit,
+    preserveExistingCadence: Boolean = false
 ) {
     if (!reminder.isEnabled) return
 
-    val nextTriggerAtMillis = nextTrigger(LocalDateTime.now(), reminder.rule)
-        .atZone(ZoneId.systemDefault())
+    val now = LocalDateTime.now()
+    val zoneId = ZoneId.systemDefault()
+    val scheduledTrigger = reminder.nextTriggerAtMillis
+        ?.takeIf { preserveExistingCadence }
+        ?.let { Instant.ofEpochMilli(it).atZone(zoneId).toLocalDateTime() }
+    val nextTriggerAtMillis = if (scheduledTrigger == null) {
+        nextTrigger(now, reminder.rule)
+    } else {
+        nextTriggerAfterScheduled(scheduledTrigger, now, reminder.rule)
+    }
+        .atZone(zoneId)
         .toInstant()
         .toEpochMilli()
     if (alarmScheduler.schedule(reminder.id, nextTriggerAtMillis)) {
@@ -535,3 +604,6 @@ fun newReminder(
     isEnabled = true,
     nextTriggerAtMillis = null
 )
+
+private const val MIN_FOREGROUND_DUE_CHECK_MILLIS = 100L
+private const val MAX_FOREGROUND_DUE_CHECK_MILLIS = 1_000L
