@@ -8,7 +8,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import com.timemaster.ui.TimeMasterApp
+import com.timemaster.ui.theme.readFontSizeMode
 import com.timemaster.ui.theme.readThemeMode
+import com.timemaster.ui.theme.saveFontSizeMode
 import com.timemaster.ui.theme.saveThemeMode
 import com.timemaster.ui.theme.TimeMasterTheme
 
@@ -22,15 +24,26 @@ class MainActivity : ComponentActivity() {
             var themeMode by rememberSaveable {
                 mutableStateOf(readThemeMode(this))
             }
-            TimeMasterTheme(themeMode = themeMode) {
+            var fontSizeMode by rememberSaveable {
+                mutableStateOf(readFontSizeMode(this))
+            }
+            TimeMasterTheme(
+                themeMode = themeMode,
+                fontSizeMode = fontSizeMode
+            ) {
                 TimeMasterApp(
                     repository = app.reminderRepository,
                     alarmScheduler = app.alarmScheduler,
                     onPreviewRingtone = app.ringtonePlayer::preview,
                     themeMode = themeMode,
+                    fontSizeMode = fontSizeMode,
                     onThemeModeChange = { nextMode ->
                         themeMode = nextMode
                         saveThemeMode(this, nextMode)
+                    },
+                    onFontSizeModeChange = { nextMode ->
+                        fontSizeMode = nextMode
+                        saveFontSizeMode(this, nextMode)
                     },
                     appVersion = BuildConfig.VERSION_NAME
                 )

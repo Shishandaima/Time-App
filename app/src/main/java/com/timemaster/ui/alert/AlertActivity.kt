@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.timemaster.TimeMasterApplication
 import com.timemaster.ui.theme.ThemeMode
+import com.timemaster.ui.theme.readFontSizeMode
 import com.timemaster.ui.theme.readThemeMode
 import com.timemaster.ui.theme.TimeMasterTheme
 
@@ -52,8 +53,12 @@ class AlertActivity : ComponentActivity() {
         app.ringtonePlayer.stop()
 
         val themeMode = readThemeMode(this)
+        val fontSizeMode = readFontSizeMode(this)
         setContent {
-            TimeMasterTheme(themeMode = themeMode) {
+            TimeMasterTheme(
+                themeMode = themeMode,
+                fontSizeMode = fontSizeMode
+            ) {
                 AlertScreen(
                     title = title,
                     backgroundColor = alertBackgroundColor(

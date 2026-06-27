@@ -43,6 +43,7 @@ import com.timemaster.ui.editor.ReminderEditorScreen
 import com.timemaster.ui.home.HomeFocusTarget
 import com.timemaster.ui.home.HomeScreen
 import com.timemaster.ui.settings.SettingsScreen
+import com.timemaster.ui.theme.FontSizeMode
 import com.timemaster.ui.theme.ThemeMode
 import com.timemaster.update.DownloadProgress
 import com.timemaster.update.GitHubReleaseClient
@@ -64,7 +65,9 @@ fun TimeMasterApp(
     alarmScheduler: AlarmScheduler,
     onPreviewRingtone: (String) -> Unit = {},
     themeMode: ThemeMode = ThemeMode.System,
+    fontSizeMode: FontSizeMode = FontSizeMode.Standard,
     onThemeModeChange: (ThemeMode) -> Unit = {},
+    onFontSizeModeChange: (FontSizeMode) -> Unit = {},
     appVersion: String = ""
 ) {
     val context = LocalContext.current
@@ -200,6 +203,7 @@ fun TimeMasterApp(
         }
         SettingsScreen(
             themeMode = themeMode,
+            fontSizeMode = fontSizeMode,
             appVersion = appVersion,
             onCheckUpdate = {
                 updateDialog = UpdateDialogState.Checking
@@ -216,6 +220,7 @@ fun TimeMasterApp(
                 }
             },
             onThemeModeChange = onThemeModeChange,
+            onFontSizeModeChange = onFontSizeModeChange,
             onBack = { returnHomeFromSettings() }
         )
     } else {
