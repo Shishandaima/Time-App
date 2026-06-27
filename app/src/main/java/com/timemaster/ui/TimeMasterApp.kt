@@ -51,6 +51,7 @@ import com.timemaster.update.GitHubReleaseClient
 import com.timemaster.update.ReleaseInfo
 import com.timemaster.update.UpdateCheckResult
 import com.timemaster.update.canInstallDownloadedApk
+import com.timemaster.update.formatReleasePublishedDate
 import com.timemaster.update.installDownloadedApk
 import com.timemaster.update.openInstallPermissionSettings
 import com.timemaster.update.updateApkDestination
@@ -424,7 +425,7 @@ private fun ReleaseInfoText(release: ReleaseInfo, currentVersion: String) {
             .verticalScroll(rememberScrollState())
     ) {
         Text("\u6700\u65b0\u7248\u672c\u53f7\uff1a${release.version}")
-        Text("\u53d1\u5e03\u65f6\u95f4\uff1a${release.publishedAt.ifBlank { "\u672a\u63d0\u4f9b" }}")
+        Text("\u53d1\u5e03\u65e5\u671f\uff1a${formatReleasePublishedDate(release.publishedAt).ifBlank { "\u672a\u63d0\u4f9b" }}")
         Text("\u5f53\u524d\u7248\u672c\u53f7\uff1a$currentVersion")
         Text(
             text = "\u66f4\u65b0\u65e5\u5fd7\uff1a\n${release.releaseNotes.ifBlank { "\u672a\u63d0\u4f9b" }}",
