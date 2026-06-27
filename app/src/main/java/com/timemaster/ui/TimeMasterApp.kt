@@ -59,6 +59,7 @@ import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -68,7 +69,8 @@ fun TimeMasterApp(
     onPreviewRingtone: (String) -> Unit = {},
     themeMode: ThemeMode = ThemeMode.System,
     onThemeModeChange: (ThemeMode) -> Unit = {},
-    appVersion: String = ""
+    appVersion: String = "",
+    onDueReminder: suspend (Long) -> Unit = {}
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -156,14 +158,50 @@ fun TimeMasterApp(
         reminders
             .filter { reminder -> needsScheduleRepair(reminder, nowMillis) }
             .forEach { reminder ->
-                scheduleIfEnabled(
-                    reminder = reminder,
-                    repository = repository,
-                    alarmScheduler = alarmScheduler,
-                    onMissingExactAlarmPermission = {},
-                    preserveExistingCadence = true
-                )
+                if (reminder.nextTriggerAtMillis == null) {
+                    scheduleIfEnabled(
+                        reminder = reminder,
+                        repository = repository,
+                        alarmScheduler = alarmScheduler,
+                        onMissingExactAlarmPermission = {},
+                        preserveExistingCadence = true
+                    )
+                } else {
+                    onDueReminder(reminder.id)
+                }
             }
+    }
+
+    LaunchedEffect(reminders) {
+        val handledDueIds = mutableSetOf<Long>()
+        while (true) {
+            val nowMillis = System.currentTimeMillis()
+            reminders
+                .filter { reminder ->
+                    reminder.isEnabled &&
+                        reminder.id !in handledDueIds &&
+                        reminder.nextTriggerAtMillis?.let { it <= nowMillis } == true
+                }
+                .forEach { reminder ->
+                    handledDueIds += reminder.id
+                    onDueReminder(reminder.id)
+                }
+
+            val nextDelayMillis = reminders
+                .asSequence()
+                .filter { it.isEnabled }
+                .mapNotNull { it.nextTriggerAtMillis }
+                .filter { it > nowMillis }
+                .minOrNull()
+                ?.let { nextTriggerAtMillis ->
+                    (nextTriggerAtMillis - nowMillis).coerceIn(
+                        MIN_FOREGROUND_DUE_CHECK_MILLIS,
+                        MAX_FOREGROUND_DUE_CHECK_MILLIS
+                    )
+                }
+                ?: MAX_FOREGROUND_DUE_CHECK_MILLIS
+            delay(nextDelayMillis)
+        }
     }
 
     fun editorReturnFocusTarget(): HomeFocusTarget =
@@ -547,3 +585,6 @@ fun newReminder(
     isEnabled = true,
     nextTriggerAtMillis = null
 )
+
+private const val MIN_FOREGROUND_DUE_CHECK_MILLIS = 100L
+private const val MAX_FOREGROUND_DUE_CHECK_MILLIS = 1_000L

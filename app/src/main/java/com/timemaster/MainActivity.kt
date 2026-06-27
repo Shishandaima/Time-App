@@ -32,7 +32,8 @@ class MainActivity : ComponentActivity() {
                         themeMode = nextMode
                         saveThemeMode(this, nextMode)
                     },
-                    appVersion = BuildConfig.VERSION_NAME
+                    appVersion = BuildConfig.VERSION_NAME,
+                    onDueReminder = app.reminderDueHandler::handleDueReminder
                 )
             }
         }
