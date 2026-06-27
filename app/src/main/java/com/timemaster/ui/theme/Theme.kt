@@ -13,10 +13,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.sp
 
-enum class ThemeMode {
-    Light,
-    Dark,
-    System
+enum class ThemeMode(
+    val label: String
+) {
+    Light("\u6d45\u8272"),
+    Dark("\u6df1\u8272"),
+    System("\u8ddf\u968f\u7cfb\u7edf")
 }
 
 enum class FontSizeMode(
