@@ -11,6 +11,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.timemaster.sound.RingDurationMode
 import com.timemaster.ui.settings.SettingsScreen
 import com.timemaster.ui.theme.FontSizeMode
 import com.timemaster.ui.theme.ThemeMode
@@ -28,10 +29,16 @@ class SettingsScreenTest {
             SettingsScreen(
                 themeMode = ThemeMode.System,
                 fontSizeMode = FontSizeMode.Standard,
+                ringDurationMode = RingDurationMode.TenSeconds,
+                vibrationEnabled = true,
+                silentModeEnabled = false,
                 appVersion = "0.4.5",
                 onCheckUpdate = {},
                 onThemeModeChange = {},
                 onFontSizeModeChange = {},
+                onRingDurationModeChange = {},
+                onVibrationEnabledChange = {},
+                onSilentModeEnabledChange = {},
                 onBack = {}
             )
         }
@@ -48,7 +55,8 @@ class SettingsScreenTest {
         composeRule.onNodeWithText("\u6807\u51c6").assertExists()
         composeRule.onNodeWithText("\u54cd\u94c3\u65f6\u957f").assertExists()
         composeRule.onNodeWithText("10\u79d2").assertExists()
-        composeRule.onNodeWithText("\u9707\u52a8\u5f00\u5173").assertExists()
+        composeRule.onNodeWithText("\u9707\u52a8").assertExists()
+        composeRule.onNodeWithText("\u9759\u97f3").assertExists()
         composeRule.onNodeWithText("\u5173\u4e8e").assertExists()
         composeRule.onNodeWithText("\u68c0\u67e5\u66f4\u65b0").assertHasClickAction()
         composeRule.onNodeWithText("APP\u7248\u672c\u53f7").assertExists()
@@ -61,10 +69,16 @@ class SettingsScreenTest {
             SettingsScreen(
                 themeMode = ThemeMode.System,
                 fontSizeMode = FontSizeMode.Standard,
+                ringDurationMode = RingDurationMode.TenSeconds,
+                vibrationEnabled = true,
+                silentModeEnabled = false,
                 appVersion = "0.4.5",
                 onCheckUpdate = {},
                 onThemeModeChange = {},
                 onFontSizeModeChange = {},
+                onRingDurationModeChange = {},
+                onVibrationEnabledChange = {},
+                onSilentModeEnabledChange = {},
                 onBack = {}
             )
         }
@@ -80,13 +94,19 @@ class SettingsScreenTest {
             .boundsInRoot
             .top
         val vibrationTop = composeRule
-            .onNodeWithText("\u9707\u52a8\u5f00\u5173")
+            .onNodeWithText("\u9707\u52a8")
+            .fetchSemanticsNode()
+            .boundsInRoot
+            .top
+        val silentTop = composeRule
+            .onNodeWithText("\u9759\u97f3")
             .fetchSemanticsNode()
             .boundsInRoot
             .top
 
         assertTrue(fontSizeTop < ringDurationTop)
         assertTrue(ringDurationTop < vibrationTop)
+        assertTrue(vibrationTop < silentTop)
 
         composeRule.onNode(isToggleable()).assertIsOn().performClick().assertIsOff()
     }
@@ -98,10 +118,16 @@ class SettingsScreenTest {
             SettingsScreen(
                 themeMode = ThemeMode.System,
                 fontSizeMode = selectedMode,
+                ringDurationMode = RingDurationMode.TenSeconds,
+                vibrationEnabled = true,
+                silentModeEnabled = false,
                 appVersion = "0.4.5",
                 onCheckUpdate = {},
                 onThemeModeChange = {},
                 onFontSizeModeChange = { selectedMode = it },
+                onRingDurationModeChange = {},
+                onVibrationEnabledChange = {},
+                onSilentModeEnabledChange = {},
                 onBack = {}
             )
         }
@@ -115,6 +141,91 @@ class SettingsScreenTest {
         composeRule.waitForIdle()
 
         assertTrue(selectedMode == FontSizeMode.ExtraLarge)
+    }
+
+    @Test
+    fun ringDurationRowShowsOptionsAndReportsSelection() {
+        var selectedMode = RingDurationMode.TenSeconds
+        composeRule.setContent {
+            SettingsScreen(
+                themeMode = ThemeMode.System,
+                fontSizeMode = FontSizeMode.Standard,
+                ringDurationMode = selectedMode,
+                vibrationEnabled = true,
+                silentModeEnabled = false,
+                appVersion = "0.4.5",
+                onCheckUpdate = {},
+                onThemeModeChange = {},
+                onFontSizeModeChange = {},
+                onRingDurationModeChange = { selectedMode = it },
+                onVibrationEnabledChange = {},
+                onSilentModeEnabledChange = {},
+                onBack = {}
+            )
+        }
+
+        composeRule.onNodeWithText("\u54cd\u94c3\u65f6\u957f").performClick()
+
+        composeRule.onNodeWithText("\u9009\u62e9\u54cd\u94c3\u65f6\u957f").assertExists()
+        composeRule.onNodeWithText("5\u79d2").assertExists().performClick()
+        composeRule.waitForIdle()
+
+        assertTrue(selectedMode == RingDurationMode.FiveSeconds)
+    }
+
+    @Test
+    fun vibrationSwitchReportsPersistedSettingChange() {
+        var vibrationEnabled = true
+        composeRule.setContent {
+            SettingsScreen(
+                themeMode = ThemeMode.System,
+                fontSizeMode = FontSizeMode.Standard,
+                ringDurationMode = RingDurationMode.TenSeconds,
+                vibrationEnabled = vibrationEnabled,
+                silentModeEnabled = false,
+                appVersion = "0.4.5",
+                onCheckUpdate = {},
+                onThemeModeChange = {},
+                onFontSizeModeChange = {},
+                onRingDurationModeChange = {},
+                onVibrationEnabledChange = { vibrationEnabled = it },
+                onSilentModeEnabledChange = {},
+                onBack = {}
+            )
+        }
+
+        composeRule.onNode(isToggleable()).assertIsOn().performClick()
+        composeRule.waitForIdle()
+
+        assertTrue(!vibrationEnabled)
+    }
+
+    @Test
+    fun silentSwitchDefaultsOffAndReportsPersistedSettingChange() {
+        var silentModeEnabled = false
+        composeRule.setContent {
+            SettingsScreen(
+                themeMode = ThemeMode.System,
+                fontSizeMode = FontSizeMode.Standard,
+                ringDurationMode = RingDurationMode.TenSeconds,
+                vibrationEnabled = true,
+                silentModeEnabled = silentModeEnabled,
+                appVersion = "0.4.5",
+                onCheckUpdate = {},
+                onThemeModeChange = {},
+                onFontSizeModeChange = {},
+                onRingDurationModeChange = {},
+                onVibrationEnabledChange = {},
+                onSilentModeEnabledChange = { silentModeEnabled = it },
+                onBack = {}
+            )
+        }
+
+        composeRule.onNodeWithText("\u9759\u97f3").assertExists()
+        composeRule.onAllNodes(isToggleable())[1].assertIsOff().performClick()
+        composeRule.waitForIdle()
+
+        assertTrue(silentModeEnabled)
     }
 
     private fun hasHeading() =

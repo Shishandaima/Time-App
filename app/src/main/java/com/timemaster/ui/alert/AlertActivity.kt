@@ -2,6 +2,7 @@ package com.timemaster.ui.alert
 
 import android.os.Build
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -27,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.timemaster.TimeMasterApplication
+import com.timemaster.sound.shouldHandleRingtoneInterruptKey
 import com.timemaster.ui.theme.ThemeMode
 import com.timemaster.ui.theme.readFontSizeMode
 import com.timemaster.ui.theme.readThemeMode
@@ -84,6 +86,17 @@ class AlertActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (
+            event.action == KeyEvent.ACTION_DOWN &&
+            shouldHandleRingtoneInterruptKey(event.keyCode, app.ringtonePlayer.isRinging())
+        ) {
+            app.ringtonePlayer.stop()
+            return true
+        }
+        return super.dispatchKeyEvent(event)
     }
 
     override fun onDestroy() {

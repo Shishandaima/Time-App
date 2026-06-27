@@ -38,6 +38,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.timemaster.sound.RingDurationMode
 import com.timemaster.ui.accessibility.pageEntryTitleFocus
 import com.timemaster.ui.layout.pageContentPadding
 import com.timemaster.ui.theme.FontSizeMode
@@ -48,25 +49,42 @@ internal data class GeneralSettingUiItem(
     val value: String?
 )
 
-internal fun generalSettingsUiItems(fontSizeMode: FontSizeMode) = listOf(
+internal fun generalSettingsUiItems(
+    themeMode: ThemeMode,
+    fontSizeMode: FontSizeMode,
+    ringDurationMode: RingDurationMode
+) = listOf(
+    GeneralSettingUiItem("\u4e3b\u9898", themeMode.label),
     GeneralSettingUiItem("\u5b57\u4f53\u5927\u5c0f", fontSizeMode.label),
-    GeneralSettingUiItem("\u54cd\u94c3\u65f6\u957f", "10\u79d2"),
-    GeneralSettingUiItem("\u9707\u52a8\u5f00\u5173", null)
+    GeneralSettingUiItem("\u54cd\u94c3\u65f6\u957f", ringDurationMode.label),
+    GeneralSettingUiItem("\u9707\u52a8", null),
+    GeneralSettingUiItem("\u9759\u97f3", null)
 )
 
 @Composable
 fun SettingsScreen(
     themeMode: ThemeMode,
     fontSizeMode: FontSizeMode,
+    ringDurationMode: RingDurationMode,
+    vibrationEnabled: Boolean,
+    silentModeEnabled: Boolean,
     appVersion: String,
     onCheckUpdate: () -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit,
     onFontSizeModeChange: (FontSizeMode) -> Unit,
+    onRingDurationModeChange: (RingDurationMode) -> Unit,
+    onVibrationEnabledChange: (Boolean) -> Unit,
+    onSilentModeEnabledChange: (Boolean) -> Unit,
     onBack: () -> Unit
 ) {
-    var vibrationEnabled by remember { mutableStateOf(true) }
+    var showThemeDialog by remember { mutableStateOf(false) }
     var showFontSizeDialog by remember { mutableStateOf(false) }
-    val generalItems = generalSettingsUiItems(fontSizeMode)
+    var showRingDurationDialog by remember { mutableStateOf(false) }
+    val generalItems = generalSettingsUiItems(
+        themeMode = themeMode,
+        fontSizeMode = fontSizeMode,
+        ringDurationMode = ringDurationMode
+    )
 
     Column(
         modifier = Modifier
@@ -116,27 +134,30 @@ fun SettingsScreen(
         }
 
         SettingsSection(title = "\u901a\u7528") {
-            Text(
-                text = "\u4e3b\u9898",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            ThemeOptionRow("\u6d45\u8272", ThemeMode.Light, themeMode, onThemeModeChange)
-            ThemeOptionRow("\u6df1\u8272", ThemeMode.Dark, themeMode, onThemeModeChange)
-            ThemeOptionRow("\u8ddf\u968f\u7cfb\u7edf", ThemeMode.System, themeMode, onThemeModeChange)
             SettingsValueRow(
                 label = generalItems[0].label,
                 value = generalItems[0].value,
-                onClick = { showFontSizeDialog = true }
+                onClick = { showThemeDialog = true }
             )
             SettingsValueRow(
                 label = generalItems[1].label,
-                value = generalItems[1].value
+                value = generalItems[1].value,
+                onClick = { showFontSizeDialog = true }
+            )
+            SettingsValueRow(
+                label = generalItems[2].label,
+                value = generalItems[2].value,
+                onClick = { showRingDurationDialog = true }
             )
             SettingsSwitchRow(
-                label = generalItems[2].label,
+                label = generalItems[3].label,
                 checked = vibrationEnabled,
-                onCheckedChange = { vibrationEnabled = it }
+                onCheckedChange = onVibrationEnabledChange
+            )
+            SettingsSwitchRow(
+                label = generalItems[4].label,
+                checked = silentModeEnabled,
+                onCheckedChange = onSilentModeEnabledChange
             )
         }
 
@@ -149,14 +170,45 @@ fun SettingsScreen(
         }
     }
 
+    if (showThemeDialog) {
+        SettingsChoiceDialog(
+            title = "\u9009\u62e9\u4e3b\u9898",
+            options = ThemeMode.entries,
+            selectedOption = themeMode,
+            optionLabel = ThemeMode::label,
+            onSelect = { mode ->
+                onThemeModeChange(mode)
+                showThemeDialog = false
+            },
+            onDismiss = { showThemeDialog = false }
+        )
+    }
+
     if (showFontSizeDialog) {
-        FontSizeDialog(
-            selectedMode = fontSizeMode,
+        SettingsChoiceDialog(
+            title = "\u9009\u62e9\u5b57\u4f53\u5927\u5c0f",
+            options = FontSizeMode.entries,
+            selectedOption = fontSizeMode,
+            optionLabel = FontSizeMode::label,
             onSelect = { mode ->
                 onFontSizeModeChange(mode)
                 showFontSizeDialog = false
             },
             onDismiss = { showFontSizeDialog = false }
+        )
+    }
+
+    if (showRingDurationDialog) {
+        SettingsChoiceDialog(
+            title = "\u9009\u62e9\u54cd\u94c3\u65f6\u957f",
+            options = RingDurationMode.entries,
+            selectedOption = ringDurationMode,
+            optionLabel = RingDurationMode::label,
+            onSelect = { mode ->
+                onRingDurationModeChange(mode)
+                showRingDurationDialog = false
+            },
+            onDismiss = { showRingDurationDialog = false }
         )
     }
 }
@@ -175,32 +227,6 @@ private fun SettingsSection(
                 content = content
             )
         }
-    }
-}
-
-@Composable
-private fun ThemeOptionRow(
-    label: String,
-    mode: ThemeMode,
-    selectedMode: ThemeMode,
-    onThemeModeChange: (ThemeMode) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onThemeModeChange(mode) }
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        RadioButton(
-            selected = selectedMode == mode,
-            onClick = { onThemeModeChange(mode) }
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(start = 8.dp)
-        )
     }
 }
 
@@ -271,25 +297,29 @@ private fun SettingsValueRow(
 }
 
 @Composable
-private fun FontSizeDialog(
-    selectedMode: FontSizeMode,
-    onSelect: (FontSizeMode) -> Unit,
+private fun <T> SettingsChoiceDialog(
+    title: String,
+    options: List<T>,
+    selectedOption: T,
+    optionLabel: (T) -> String,
+    onSelect: (T) -> Unit,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "\u9009\u62e9\u5b57\u4f53\u5927\u5c0f",
+                text = title,
                 style = MaterialTheme.typography.titleLarge
             )
         },
         text = {
             Column {
-                FontSizeMode.entries.forEach { mode ->
-                    FontSizeOptionRow(
-                        mode = mode,
-                        selectedMode = selectedMode,
+                options.forEach { option ->
+                    SettingsChoiceOptionRow(
+                        label = optionLabel(option),
+                        selected = selectedOption == option,
+                        option = option,
                         onSelect = onSelect
                     )
                 }
@@ -304,28 +334,29 @@ private fun FontSizeDialog(
 }
 
 @Composable
-private fun FontSizeOptionRow(
-    mode: FontSizeMode,
-    selectedMode: FontSizeMode,
-    onSelect: (FontSizeMode) -> Unit
+private fun <T> SettingsChoiceOptionRow(
+    label: String,
+    selected: Boolean,
+    option: T,
+    onSelect: (T) -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onSelect(mode) }
+            .clickable { onSelect(option) }
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         RadioButton(
-            selected = selectedMode == mode,
-            onClick = { onSelect(mode) }
+            selected = selected,
+            onClick = { onSelect(option) }
         )
         Text(
-            text = mode.label,
+            text = label,
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier
                 .padding(start = 8.dp)
-                .clickable { onSelect(mode) }
+                .clickable { onSelect(option) }
         )
     }
 }

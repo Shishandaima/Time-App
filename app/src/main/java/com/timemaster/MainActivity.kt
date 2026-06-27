@@ -1,12 +1,20 @@
 package com.timemaster
 
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import com.timemaster.sound.readRingDurationMode
+import com.timemaster.sound.readSilentModeEnabled
+import com.timemaster.sound.readVibrationEnabled
+import com.timemaster.sound.saveRingDurationMode
+import com.timemaster.sound.saveSilentModeEnabled
+import com.timemaster.sound.saveVibrationEnabled
+import com.timemaster.sound.shouldHandleRingtoneInterruptKey
 import com.timemaster.ui.TimeMasterApp
 import com.timemaster.ui.theme.readFontSizeMode
 import com.timemaster.ui.theme.readThemeMode
@@ -27,6 +35,15 @@ class MainActivity : ComponentActivity() {
             var fontSizeMode by rememberSaveable {
                 mutableStateOf(readFontSizeMode(this))
             }
+            var ringDurationMode by rememberSaveable {
+                mutableStateOf(readRingDurationMode(this))
+            }
+            var vibrationEnabled by rememberSaveable {
+                mutableStateOf(readVibrationEnabled(this))
+            }
+            var silentModeEnabled by rememberSaveable {
+                mutableStateOf(readSilentModeEnabled(this))
+            }
             TimeMasterTheme(
                 themeMode = themeMode,
                 fontSizeMode = fontSizeMode
@@ -37,6 +54,9 @@ class MainActivity : ComponentActivity() {
                     onPreviewRingtone = app.ringtonePlayer::preview,
                     themeMode = themeMode,
                     fontSizeMode = fontSizeMode,
+                    ringDurationMode = ringDurationMode,
+                    vibrationEnabled = vibrationEnabled,
+                    silentModeEnabled = silentModeEnabled,
                     onThemeModeChange = { nextMode ->
                         themeMode = nextMode
                         saveThemeMode(this, nextMode)
@@ -45,9 +65,32 @@ class MainActivity : ComponentActivity() {
                         fontSizeMode = nextMode
                         saveFontSizeMode(this, nextMode)
                     },
+                    onRingDurationModeChange = { nextMode ->
+                        ringDurationMode = nextMode
+                        saveRingDurationMode(this, nextMode)
+                    },
+                    onVibrationEnabledChange = { enabled ->
+                        vibrationEnabled = enabled
+                        saveVibrationEnabled(this, enabled)
+                    },
+                    onSilentModeEnabledChange = { enabled ->
+                        silentModeEnabled = enabled
+                        saveSilentModeEnabled(this, enabled)
+                    },
                     appVersion = BuildConfig.VERSION_NAME
                 )
             }
         }
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (
+            event.action == KeyEvent.ACTION_DOWN &&
+            shouldHandleRingtoneInterruptKey(event.keyCode, app.ringtonePlayer.isRinging())
+        ) {
+            app.ringtonePlayer.stop()
+            return true
+        }
+        return super.dispatchKeyEvent(event)
     }
 }
