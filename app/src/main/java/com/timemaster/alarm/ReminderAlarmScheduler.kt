@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import com.timemaster.MainActivity
 
 const val ACTION_REMINDER_ALARM = "com.timemaster.ACTION_REMINDER_ALARM"
 const val EXTRA_REMINDER_ID = "reminder_id"
@@ -14,6 +15,13 @@ interface AlarmScheduler {
     fun schedule(reminderId: Long, triggerAtMillis: Long): Boolean
     fun cancel(reminderId: Long)
 }
+
+enum class ReminderAlarmScheduleMode {
+    AlarmClock
+}
+
+fun reminderAlarmScheduleMode(): ReminderAlarmScheduleMode =
+    ReminderAlarmScheduleMode.AlarmClock
 
 class ReminderAlarmScheduler(
     private val context: Context
@@ -27,18 +35,16 @@ class ReminderAlarmScheduler(
         }
 
         val pendingIntent = pendingIntentFor(reminderId)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                triggerAtMillis,
+        try {
+            alarmManager.setAlarmClock(
+                AlarmManager.AlarmClockInfo(
+                    triggerAtMillis,
+                    showIntentFor(reminderId)
+                ),
                 pendingIntent
             )
-        } else {
-            alarmManager.setExact(
-                AlarmManager.RTC_WAKEUP,
-                triggerAtMillis,
-                pendingIntent
-            )
+        } catch (_: SecurityException) {
+            return false
         }
         return true
     }
@@ -56,6 +62,20 @@ class ReminderAlarmScheduler(
         return PendingIntent.getBroadcast(
             context,
             0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    private fun showIntentFor(reminderId: Long): PendingIntent {
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            data = Uri.parse("timemaster://reminder/show/$reminderId")
+            putExtra(EXTRA_REMINDER_ID, reminderId)
+        }
+        return PendingIntent.getActivity(
+            context,
+            reminderId.hashCode(),
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )

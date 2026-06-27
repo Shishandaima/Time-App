@@ -55,6 +55,34 @@ class ReminderCountdownTextTest {
         )
     }
 
+    @Test
+    fun missingTriggerShowsReschedulingTextInsteadOfFakeCountdown() {
+        val now = Instant.parse("2026-06-20T08:00:00Z").toEpochMilli()
+        val reminder = reminder(
+            isEnabled = true,
+            nextTriggerAtMillis = null
+        )
+
+        assertEquals(
+            "\u4e0b\u6b21\u63d0\u9192\uff1a\u6b63\u5728\u91cd\u65b0\u8c03\u5ea6",
+            reminderCountdownText(reminder, nowMillis = now, zoneId = ZoneId.of("UTC"))
+        )
+    }
+
+    @Test
+    fun pastTriggerShowsReschedulingTextInsteadOfFakeCountdown() {
+        val now = Instant.parse("2026-06-20T08:00:00Z").toEpochMilli()
+        val reminder = reminder(
+            isEnabled = true,
+            nextTriggerAtMillis = now
+        )
+
+        assertEquals(
+            "\u4e0b\u6b21\u63d0\u9192\uff1a\u6b63\u5728\u91cd\u65b0\u8c03\u5ea6",
+            reminderCountdownText(reminder, nowMillis = now, zoneId = ZoneId.of("UTC"))
+        )
+    }
+
     private fun reminder(
         isEnabled: Boolean,
         nextTriggerAtMillis: Long?
