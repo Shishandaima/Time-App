@@ -35,6 +35,7 @@ class RingtonePlayer(
             ringtoneId = ringtoneId,
             loop = true,
             playSound = shouldPlayStrongAlertSound(),
+            vibrationEnabled = readVibrationEnabled(appContext),
             autoStopMillis = readRingDurationMode(appContext).durationMillis
         )
     }
@@ -56,11 +57,12 @@ class RingtonePlayer(
         ringtoneId: String,
         loop: Boolean,
         playSound: Boolean,
+        vibrationEnabled: Boolean = true,
         autoStopMillis: Long = DEFAULT_AUTO_STOP_MILLIS
     ) {
         stop()
         if (!playSound) {
-            if (loop) {
+            if (shouldStartVibration(loop, vibrationEnabled)) {
                 startVibration()
                 autoStopHandler.postDelayed(autoStopRunnable, autoStopMillis)
             }
@@ -81,8 +83,10 @@ class RingtonePlayer(
         }
         player = nextPlayer
         nextPlayer.start()
-        if (loop) {
+        if (shouldStartVibration(loop, vibrationEnabled)) {
             startVibration()
+        }
+        if (loop) {
             autoStopHandler.postDelayed(autoStopRunnable, autoStopMillis)
         }
     }

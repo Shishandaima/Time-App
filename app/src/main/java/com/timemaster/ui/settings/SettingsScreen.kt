@@ -55,7 +55,7 @@ internal fun generalSettingsUiItems(
 ) = listOf(
     GeneralSettingUiItem("\u5b57\u4f53\u5927\u5c0f", fontSizeMode.label),
     GeneralSettingUiItem("\u54cd\u94c3\u65f6\u957f", ringDurationMode.label),
-    GeneralSettingUiItem("\u9707\u52a8\u5f00\u5173", null)
+    GeneralSettingUiItem("\u9707\u52a8", null)
 )
 
 @Composable
@@ -63,14 +63,15 @@ fun SettingsScreen(
     themeMode: ThemeMode,
     fontSizeMode: FontSizeMode,
     ringDurationMode: RingDurationMode,
+    vibrationEnabled: Boolean,
     appVersion: String,
     onCheckUpdate: () -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit,
     onFontSizeModeChange: (FontSizeMode) -> Unit,
     onRingDurationModeChange: (RingDurationMode) -> Unit,
+    onVibrationEnabledChange: (Boolean) -> Unit,
     onBack: () -> Unit
 ) {
-    var vibrationEnabled by remember { mutableStateOf(true) }
     var showFontSizeDialog by remember { mutableStateOf(false) }
     var showRingDurationDialog by remember { mutableStateOf(false) }
     val generalItems = generalSettingsUiItems(
@@ -147,7 +148,7 @@ fun SettingsScreen(
             SettingsSwitchRow(
                 label = generalItems[2].label,
                 checked = vibrationEnabled,
-                onCheckedChange = { vibrationEnabled = it }
+                onCheckedChange = onVibrationEnabledChange
             )
         }
 

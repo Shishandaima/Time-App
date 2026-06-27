@@ -30,11 +30,13 @@ class SettingsScreenTest {
                 themeMode = ThemeMode.System,
                 fontSizeMode = FontSizeMode.Standard,
                 ringDurationMode = RingDurationMode.TenSeconds,
+                vibrationEnabled = true,
                 appVersion = "0.4.5",
                 onCheckUpdate = {},
                 onThemeModeChange = {},
                 onFontSizeModeChange = {},
                 onRingDurationModeChange = {},
+                onVibrationEnabledChange = {},
                 onBack = {}
             )
         }
@@ -51,7 +53,7 @@ class SettingsScreenTest {
         composeRule.onNodeWithText("\u6807\u51c6").assertExists()
         composeRule.onNodeWithText("\u54cd\u94c3\u65f6\u957f").assertExists()
         composeRule.onNodeWithText("10\u79d2").assertExists()
-        composeRule.onNodeWithText("\u9707\u52a8\u5f00\u5173").assertExists()
+        composeRule.onNodeWithText("\u9707\u52a8").assertExists()
         composeRule.onNodeWithText("\u5173\u4e8e").assertExists()
         composeRule.onNodeWithText("\u68c0\u67e5\u66f4\u65b0").assertHasClickAction()
         composeRule.onNodeWithText("APP\u7248\u672c\u53f7").assertExists()
@@ -65,11 +67,13 @@ class SettingsScreenTest {
                 themeMode = ThemeMode.System,
                 fontSizeMode = FontSizeMode.Standard,
                 ringDurationMode = RingDurationMode.TenSeconds,
+                vibrationEnabled = true,
                 appVersion = "0.4.5",
                 onCheckUpdate = {},
                 onThemeModeChange = {},
                 onFontSizeModeChange = {},
                 onRingDurationModeChange = {},
+                onVibrationEnabledChange = {},
                 onBack = {}
             )
         }
@@ -85,7 +89,7 @@ class SettingsScreenTest {
             .boundsInRoot
             .top
         val vibrationTop = composeRule
-            .onNodeWithText("\u9707\u52a8\u5f00\u5173")
+            .onNodeWithText("\u9707\u52a8")
             .fetchSemanticsNode()
             .boundsInRoot
             .top
@@ -104,11 +108,13 @@ class SettingsScreenTest {
                 themeMode = ThemeMode.System,
                 fontSizeMode = selectedMode,
                 ringDurationMode = RingDurationMode.TenSeconds,
+                vibrationEnabled = true,
                 appVersion = "0.4.5",
                 onCheckUpdate = {},
                 onThemeModeChange = {},
                 onFontSizeModeChange = { selectedMode = it },
                 onRingDurationModeChange = {},
+                onVibrationEnabledChange = {},
                 onBack = {}
             )
         }
@@ -132,11 +138,13 @@ class SettingsScreenTest {
                 themeMode = ThemeMode.System,
                 fontSizeMode = FontSizeMode.Standard,
                 ringDurationMode = selectedMode,
+                vibrationEnabled = true,
                 appVersion = "0.4.5",
                 onCheckUpdate = {},
                 onThemeModeChange = {},
                 onFontSizeModeChange = {},
                 onRingDurationModeChange = { selectedMode = it },
+                onVibrationEnabledChange = {},
                 onBack = {}
             )
         }
@@ -148,6 +156,31 @@ class SettingsScreenTest {
         composeRule.waitForIdle()
 
         assertTrue(selectedMode == RingDurationMode.FiveSeconds)
+    }
+
+    @Test
+    fun vibrationSwitchReportsPersistedSettingChange() {
+        var vibrationEnabled = true
+        composeRule.setContent {
+            SettingsScreen(
+                themeMode = ThemeMode.System,
+                fontSizeMode = FontSizeMode.Standard,
+                ringDurationMode = RingDurationMode.TenSeconds,
+                vibrationEnabled = vibrationEnabled,
+                appVersion = "0.4.5",
+                onCheckUpdate = {},
+                onThemeModeChange = {},
+                onFontSizeModeChange = {},
+                onRingDurationModeChange = {},
+                onVibrationEnabledChange = { vibrationEnabled = it },
+                onBack = {}
+            )
+        }
+
+        composeRule.onNode(isToggleable()).assertIsOn().performClick()
+        composeRule.waitForIdle()
+
+        assertTrue(!vibrationEnabled)
     }
 
     private fun hasHeading() =
