@@ -1,6 +1,7 @@
 package com.timemaster
 
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.getValue
@@ -10,6 +11,7 @@ import androidx.compose.runtime.setValue
 import com.timemaster.sound.readRingDurationMode
 import com.timemaster.sound.readSilentModeEnabled
 import com.timemaster.sound.readVibrationEnabled
+import com.timemaster.sound.isRingtoneInterruptKey
 import com.timemaster.sound.saveRingDurationMode
 import com.timemaster.sound.saveSilentModeEnabled
 import com.timemaster.sound.saveVibrationEnabled
@@ -79,5 +81,13 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.action == KeyEvent.ACTION_DOWN && isRingtoneInterruptKey(event.keyCode)) {
+            app.ringtonePlayer.stop()
+            return true
+        }
+        return super.dispatchKeyEvent(event)
     }
 }
